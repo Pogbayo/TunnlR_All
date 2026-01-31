@@ -1,9 +1,13 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Application.Entities;
 
-namespace Application.Helper
+namespace TunnlRCLI.Helpers
 {
-    public static class Helpers
+    public class ConsoleHelpers
     {
         public static void PrintAnimatedHeader(string text, ConsoleColor color, int charDelay)
         {
@@ -26,7 +30,7 @@ namespace Application.Helper
             Console.ResetColor();
         }
 
-        public static void PrintTunnelInfo(Tunnel tunnel)  // ← changed from dynamic to Tunnel
+        public static void PrintTunnelInfo(Tunnel tunnel)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("\n✅ Tunnel started!\n");

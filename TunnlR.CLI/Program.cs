@@ -1,37 +1,28 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Tunnlr.Services;  
-using Application.Persistence;
-using Microsoft.Extensions.Configuration;
-using Application.Helper;
+using TunnlRCLI.Helpers;
 
 class Program
 {
-    static async Task Main(string[] args)
+
+    static void Main(string[] args)
     {
         var builder = Host.CreateApplicationBuilder(args);
-
-       
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-            ?? "Data Source=tunnels.db"; 
-
-        builder.Services.AddDbContext<TunnelDbContext>(options =>
-            options.UseSqlite(connectionString));
-
-        builder.Services.AddSingleton<TunnelService>();  
+        builder.Configuration.AddJsonFile("appsettings.json", optional: true);
 
         using var host = builder.Build();
 
-        await RunCliLoopAsync(host.Services);
+         RunCliLoopAsync(host.Services);
     }
 
-    private static async Task RunCliLoopAsync(IServiceProvider services)
+    private static void RunCliLoopAsync(IServiceProvider services)
     {
         var tunnelService = services.GetRequiredService<TunnelService>();
 
         Console.Clear();
-        Helpers.PrintAnimatedHeader("🚀 Tunnlr CLI", ConsoleColor.Cyan, 50);
+        ConsoleHelpers.PrintAnimatedHeader("🚀 Tunnlr CLI", ConsoleColor.Cyan, 50);
         Console.WriteLine("Type 'help' to see commands.\n");
 
         while (true)
@@ -46,10 +37,10 @@ class Program
             if (command == "exit") break;
             if (command == "help")
             {
-                Helpers.PrintHelp();
+                ConsoleHelpers.PrintHelp();
                 continue;
             }
-            if (command.StartsWith("start"))
+            if (command.StartsWith("tunnlr start"))
             {
                 int port = 5000;
                 string protocol = "http";
@@ -71,17 +62,17 @@ class Program
 
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.Write("\nStarting tunnel");
-                Helpers.AnimateDots(6, 300);
+                ConsoleHelpers.AnimateDots(6, 300);
                 Console.WriteLine();
-                Helpers.PrintLoadingBar("Initializing services", 20, 30);
+                ConsoleHelpers.PrintLoadingBar("Initializing services", 20, 30);
 
-                var tunnel = tunnelService.StartTunnel(port, protocol);
+                //var tunnel = tunnelService.StartTunnel(port, protocol);
 
-                using var scope = services.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<TunnelDbContext>();
+                //using var scope = services.CreateScope();
+                //var db = scope.ServiceProvider.GetRequiredService<TunnelDbContext>();
 
-                Helpers.PrintTunnelInfo(tunnel);
-            }
+                //ConsoleHelpers.PrintTunnelInfo(tunnel);
+            } 
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;

@@ -1,9 +1,9 @@
 ﻿namespace Application.Entities
 {
-    public class TunnelConnection
+    public class TunnelTraffic
     {
-        public int Id { get; set; }                    
-        public int TunnelId { get; set; }            
+        public Guid Id { get; set; }                    
+        public Guid TunnelId { get; set; }            
         public string ClientIp { get; set; } = string.Empty;
         public DateTime ConnectedAt { get; set; }
         public DateTime? DisconnectedAt { get; set; }   
