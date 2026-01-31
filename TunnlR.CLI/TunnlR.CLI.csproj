@@ -6,12 +6,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Application\TunnlR.Application.csproj" />
-    <ProjectReference Include="..\TunnlR.Domain\TunnlR.Domain.csproj" />
+	  <ProjectReference Include="..\TunnlR.Application\TunnlR.Application.csproj" />
+	  <ProjectReference Include="..\TunnlR.Domain\TunnlR.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Events\" />
+    <Folder Include="Services\" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -1,10 +1,10 @@
 ﻿using Application.Enums;
+using TunnlR.Domain;
 
-namespace Application.Entities
+namespace Domain.Entities
 {
-    public class TunnelLog
+    public class TunnelLog : BaseEntity
     {
-        public Guid Id { get; set; }                     
         public Guid TunnelId { get; set; }               
         public DateTime Timestamp { get; set; }
         public TunnelEventTypeLog EventType { get; set; }  

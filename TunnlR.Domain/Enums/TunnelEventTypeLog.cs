@@ -2,8 +2,8 @@
 {
     public enum TunnelEventTypeLog
     {
-        started,
+        opened,
         connected,
-        stopped
+        closed
     }
 }

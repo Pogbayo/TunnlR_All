@@ -1,8 +1,9 @@
-﻿namespace Application.Entities
+﻿using TunnlR.Domain;
+
+namespace Domain.Entities
 {
-    public class TunnelTraffic
+    public class TunnelTraffic : BaseEntity
     {
-        public Guid Id { get; set; }                    
         public Guid TunnelId { get; set; }            
         public string ClientIp { get; set; } = string.Empty;
         public DateTime ConnectedAt { get; set; }

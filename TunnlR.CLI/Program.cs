@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Tunnlr.Services;  
+using TunnlR.CLI.Configuration;
+
+//using Ap.Services;  
 using TunnlRCLI.Helpers;
 
 class Program
@@ -11,6 +13,9 @@ class Program
     {
         var builder = Host.CreateApplicationBuilder(args);
         builder.Configuration.AddJsonFile("appsettings.json", optional: true);
+        builder.Services.AddHttpClient<AuthenticationService>();
+
+        builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
         using var host = builder.Build();
 
@@ -19,7 +24,7 @@ class Program
 
     private static void RunCliLoopAsync(IServiceProvider services)
     {
-        var tunnelService = services.GetRequiredService<TunnelService>();
+        //var tunnelService = services.GetRequiredService<TunnelService>();
 
         Console.Clear();
         ConsoleHelpers.PrintAnimatedHeader("🚀 Tunnlr CLI", ConsoleColor.Cyan, 50);

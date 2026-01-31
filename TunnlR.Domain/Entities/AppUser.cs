@@ -1,27 +1,20 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
-namespace Application.Entities
+namespace Domain.Entities
 {
-    public class AppUser
+    public class AppUser : IdentityUser<Guid>
     {
-        [Key]
-        public Guid Id { get; set; }
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; } = string.Empty;
-
-        [Required]
-        public string PasswordHash { get; set; } = string.Empty;  
-
-        public string FullName { get; set; } = string.Empty;
-
-        public string? AuthToken { get; set; } 
-
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
         public DateTime? LastLoginAt { get; set; }
-
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+        public bool IsDeleted { get; set; } = false;
         public ICollection<Tunnel> Tunnels { get; set; } = new List<Tunnel>();
+
+        public void MarkAsDeleted() => IsDeleted = true;
+
     }
 }

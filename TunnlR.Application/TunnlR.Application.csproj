@@ -9,13 +9,17 @@
   <ItemGroup>
     <Folder Include="Helper\" />
     <Folder Include="Interfaces\IRepository\" />
-    <Folder Include="Interfaces\IService\" />
     <Folder Include="UrlGeneration\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TunnlR.Infrastructure\TunnlR.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

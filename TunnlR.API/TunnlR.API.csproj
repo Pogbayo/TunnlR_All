@@ -11,11 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Application\TunnlR.Application.csproj" />
+	  <ProjectReference Include="..\TunnlR.Application\TunnlR.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
     <Folder Include="Middlewares\" />
   </ItemGroup>
 
