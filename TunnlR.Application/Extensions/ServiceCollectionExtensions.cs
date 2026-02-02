@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using TunnlR.Application.Interfaces.IService;
 using TunnlR.Application.Services.Auth;
-using TunnlR.Application.Services.Tunnel;
+using TunnlR.Application.Services.TunnelServices;
 using TunnlR.Application.Services.WebSocket;
 
 namespace TunnlR.Application.Extensions

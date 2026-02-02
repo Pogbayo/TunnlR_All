@@ -32,4 +32,21 @@ public class AuthenticationService
         var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
         return result ?? throw new Exception("Failed to deserialize login response");
     }
+
+    public async Task<RegisterResponse> RegisterAsync(string email, string password, string confirmPassword)
+    {
+        var request = new RegisterRequest
+        {
+            Email = email,
+            Password = password,
+            ConfirmPassword = confirmPassword
+        };
+
+        var response = await _httpClient.PostAsJsonAsync("/api/auth/register", request);
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<RegisterResponse>();
+        return result ?? throw new Exception("Failed to deserialize register response");
+    }
+}
 }

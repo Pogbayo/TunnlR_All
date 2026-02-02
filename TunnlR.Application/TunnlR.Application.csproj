@@ -9,6 +9,7 @@
   <ItemGroup>
     <Folder Include="Helper\" />
     <Folder Include="Interfaces\IRepository\" />
+    <Folder Include="Services\UserServices\" />
     <Folder Include="UrlGeneration\" />
   </ItemGroup>
 
@@ -19,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TunnlR.Domain\TunnlR.Domain.csproj" />
     <ProjectReference Include="..\TunnlR.Infrastructure\TunnlR.Infrastructure.csproj" />
   </ItemGroup>
 

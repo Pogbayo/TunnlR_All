@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
-namespace Domain.Entities
+namespace TunnlR.Domain.Entities
 {
     public class AppUser : IdentityUser<Guid>
     {

@@ -1,12 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TunnlR.Application.DTOs.Tunnel;
 using TunnlR.Application.Interfaces.IService;
-using TunnlR.Application.Services.Tunnel;
-using TunnlR.Domain.DTOs.Tunnel;
-using TunnlR.Infrastructure.Persistence;
 using TunnlR.RelayServer.Persistence;
+using Domain.Enums;
+using TunnlR.Domain.Entities;
 
-namespace TunnlR.Application.Services.Tunnel
+namespace TunnlR.Application.Services.TunnelServices
 {
     public class TunnelService : ITunnelService
     {
@@ -26,7 +25,7 @@ namespace TunnlR.Application.Services.Tunnel
             var publicUrl = $"https://{subdomain}.tunnlr.dev";
             var dashboardUrl = $"https://dashboard.tunnlr.dev/{subdomain}";
 
-            var tunnel = new Domain.Entities.Tunnel
+            var tunnel = new Tunnel
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
@@ -35,7 +34,7 @@ namespace TunnlR.Application.Services.Tunnel
                 LocalPort = request.LocalPort,
                 Protocol = request.Protocol,
                 CreatedAt = DateTime.UtcNow,
-                IsActive = true
+                Status = TunnelStatus.Active
             };
 
             _context.Tunnels.Add(tunnel);
@@ -55,15 +54,16 @@ namespace TunnlR.Application.Services.Tunnel
             if (tunnel == null)
                 throw new KeyNotFoundException("Tunnel not found");
 
-            var sessions = await _context.Tunnel
-                .Where(s => s.TunnelId == tunnelId)
+            var sessions = await _context.Tunnels
+                .Include(s => s.TunnelTraffics)
+                .Where(s => s.Id == tunnelId)
                 .ToListAsync();
 
             return new TunnelStatusResponse
             {
                 TunnelId = tunnel.Id,
-                IsActive = tunnel.IsActive,
-                BytesTransferred = sessions.Sum(s => s.BytesTransferred),
+                TunnelStatus = TunnelStatus.Active,
+                //BytesTransferred = sessions.TunnelTraffics.Sum(s => s.BytesTransferred),
                 RequestCount = sessions.Count
             };
         }
@@ -73,7 +73,7 @@ namespace TunnlR.Application.Services.Tunnel
             var tunnel = await _context.Tunnels.FindAsync(tunnelId);
             if (tunnel != null)
             {
-                tunnel.IsActive = false;
+                tunnel.Status = TunnelStatus.Inactive;
                 await _context.SaveChangesAsync();
             }
         }

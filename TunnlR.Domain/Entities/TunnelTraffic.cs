@@ -1,6 +1,4 @@
-﻿using TunnlR.Domain;
-
-namespace Domain.Entities
+﻿namespace TunnlR.Domain.Entities
 {
     public class TunnelTraffic : BaseEntity
     {

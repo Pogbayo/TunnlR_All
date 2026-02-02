@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿
+using TunnlR.Domain.Entities;
 
 namespace TunnlR.Infrastructure.TokenAuthentication
 {

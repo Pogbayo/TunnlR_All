@@ -1,8 +1,8 @@
-﻿using Domain.Entities;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TunnlR.Domain.Entities;
 using TunnlR.Infrastructure.TokenAuthentication;
 using TunnlR.RelayServer.Persistence;
 

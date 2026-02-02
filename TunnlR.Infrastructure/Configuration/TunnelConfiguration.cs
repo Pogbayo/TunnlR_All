@@ -1,6 +1,6 @@
-﻿using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TunnlR.Domain.Entities;
 
 namespace TunnlR.Infrastructure.Configurations
 {
@@ -22,15 +22,15 @@ namespace TunnlR.Infrastructure.Configurations
             builder.Property(t => t.Protocol)
                 .HasMaxLength(5);
 
-            builder.Property(t => t.Status)
-                .HasConversion<string>(); 
+            //builder.Property(t => t.Status)
+            //    .HasConversion<string>(); 
 
-            builder.HasMany(t => t.Traffics)
+            builder.HasMany(t => t.TunnelTraffics)
                 .WithOne()  
                 .HasForeignKey(c => c.TunnelId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasMany(t => t.Logs)
+            builder.HasMany(t => t.TunnelLogs)
                 .WithOne()
                 .HasForeignKey(l => l.TunnelId)
                 .OnDelete(DeleteBehavior.Cascade);

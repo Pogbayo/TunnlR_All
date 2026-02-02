@@ -1,7 +1,6 @@
-﻿using Application.Enums;
-using TunnlR.Domain;
+﻿using Domain.Enums;
 
-namespace Domain.Entities
+namespace TunnlR.Domain.Entities
 {
     public class Tunnel : BaseEntity
     {

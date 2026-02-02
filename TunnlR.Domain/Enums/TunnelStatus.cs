@@ -1,8 +1,8 @@
-﻿namespace Application.Enums
+﻿namespace Domain.Enums
 {
     public enum TunnelStatus
     {
-        active,
-        inactive
+        Active,
+        Inactive
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Application.Enums;
-using TunnlR.Domain;
 
-namespace Domain.Entities
+namespace TunnlR.Domain.Entities
 {
     public class TunnelLog : BaseEntity
     {

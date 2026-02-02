@@ -1,5 +1,4 @@
-﻿
-using Domain.Entities;
+﻿using TunnlR.Domain.Entities;
 
 namespace TunnlRCLI.Helpers
 {

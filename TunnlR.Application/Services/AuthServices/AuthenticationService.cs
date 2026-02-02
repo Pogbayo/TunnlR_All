@@ -1,4 +1,4 @@
-﻿using Domain.Entities;
+﻿using TunnlR.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using TunnlR.Application.DTOs.Auth;
 using TunnlR.Application.Interfaces.IService;
