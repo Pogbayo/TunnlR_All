@@ -5,7 +5,6 @@ using System.Text.Json;
 using TunnlR.Application.DTOs.Tunnel;
 using TunnlR.Application.Interfaces.IService;
 
-
 namespace TunnlR.API.WebSockets
 {
     public class TunnelWebSocketHandler
@@ -21,35 +20,28 @@ namespace TunnlR.API.WebSockets
             _tunnelService = tunnelService;
         }
 
-        public async Task HandleConnectionAsync(
-            HttpContext context,
-            System.Net.WebSockets.WebSocket webSocket)
+        public async Task HandleConnectionAsync(HttpContext context,WebSocket webSocket)
         {
             var connectionId = Guid.NewGuid().ToString();
             _connectionManager.AddConnection(connectionId, webSocket);
 
             try
             {
-                // Extract user ID from token
                 var token = context.Request.Query["token"].ToString();
                 var userId = ExtractUserIdFromToken(token);
 
-                // Extract port from query
                 var port = int.Parse(context.Request.Query["port"].ToString());
                 var protocol = context.Request.Query["protocol"].ToString();
 
-                // Create tunnel
                 var tunnelResponse = await _tunnelService.CreateTunnelAsync(userId, new TunnelCreateRequest
                 {
                     LocalPort = port,
                     Protocol = protocol
                 });
 
-                // Send tunnel info to CLI
                 var message = JsonSerializer.Serialize(tunnelResponse);
                 await _connectionManager.SendMessageAsync(connectionId, message);
 
-                // Keep connection alive and handle messages
                 await ReceiveMessagesAsync(webSocket, connectionId);
             }
             finally
@@ -57,8 +49,8 @@ namespace TunnlR.API.WebSockets
                 _connectionManager.RemoveConnection(connectionId);
             }
         }
-
-        private async Task ReceiveMessagesAsync(System.Net.WebSockets.WebSocket webSocket, string connectionId)
+         
+        private async Task ReceiveMessagesAsync(WebSocket  webSocket, string connectionId)
         {
             var buffer = new byte[1024 * 4];
 

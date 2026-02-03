@@ -29,10 +29,10 @@ namespace TunnlR.CLI.Commands
             Console.WriteLine($"Starting tunnel on port {port}...");
             ConsoleHelpers.PrintLoadingBar("Connecting", 20, 50);
 
+            await _tunnelService.ConnectAsync(token, port, protocol);
+
             _tunnelService.TunnelEstablished += OnTunnelEstablished;
             _tunnelService.MessageReceived += OnMessageReceived;
-
-            await _tunnelService.ConnectAsync(token, port, protocol);
 
             Console.WriteLine("\nPress Ctrl+C to stop the tunnel...");
             await Task.Delay(Timeout.Infinite);

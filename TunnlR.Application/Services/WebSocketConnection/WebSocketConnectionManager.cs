@@ -2,19 +2,18 @@
 using System.Net.WebSockets;
 using System.Text;
 using TunnlR.Application.Interfaces.IService;
-
-namespace TunnlR.Application.Services.WebSocket
+namespace TunnlR.Application.Services.WebSocketConnection
 {
     public class WebSocketConnectionManager : IWebSocketConnectionManager
     {
-        private readonly ConcurrentDictionary<string, System.Net.WebSockets.WebSocket> _connections = new();
+        private readonly ConcurrentDictionary<string,WebSocket> _connections = new();
 
-        public void AddConnection(string connectionId, System.Net.WebSockets.WebSocket socket)
+        public void AddConnection(string connectionId,  WebSocket socket)
         {
             _connections.TryAdd(connectionId, socket);
         }
 
-        public System.Net.WebSockets.WebSocket? GetConnection(string connectionId)
+        public WebSocket? GetConnection(string connectionId)
         {
             _connections.TryGetValue(connectionId, out var socket);
             return socket;
