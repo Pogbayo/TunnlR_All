@@ -16,8 +16,4 @@
 	  <ProjectReference Include="..\TunnlR.Application\TunnlR.Application.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Middlewares\" />
-  </ItemGroup>
-
 </Project>

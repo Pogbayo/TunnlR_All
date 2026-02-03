@@ -2,17 +2,17 @@
 using TunnlR.Application.Services.TunnelServices;
 using TunnlR.CLI.Configuration;
 using TunnlRCLI.Helpers;
-
+using TunnlR.CLI.Services;
 namespace TunnlR.CLI.Commands
 {
     public class StartCommand
     {
-        private readonly TunnelService _tunnelService;
+        private readonly CLITunnelService _clitunnelService;
         private readonly TokenStorage _tokenStorage;
 
-        public StartCommand(TunnelService tunnelService, TokenStorage tokenStorage)
+        public StartCommand(CLITunnelService clitunnelService, TokenStorage tokenStorage)
         {
-            _tunnelService = tunnelService;
+            _clitunnelService = clitunnelService;
             _tokenStorage = tokenStorage;
         }
 
@@ -29,10 +29,10 @@ namespace TunnlR.CLI.Commands
             Console.WriteLine($"Starting tunnel on port {port}...");
             ConsoleHelpers.PrintLoadingBar("Connecting", 20, 50);
 
-            await _tunnelService.ConnectAsync(token, port, protocol);
+            await _clitunnelService.ConnectAsync(token, port, protocol);
 
-            _tunnelService.TunnelEstablished += OnTunnelEstablished;
-            _tunnelService.MessageReceived += OnMessageReceived;
+            _clitunnelService.TunnelEstablished += OnTunnelEstablished;
+            _clitunnelService.MessageReceived += OnMessageReceived;
 
             Console.WriteLine("\nPress Ctrl+C to stop the tunnel...");
             await Task.Delay(Timeout.Infinite);

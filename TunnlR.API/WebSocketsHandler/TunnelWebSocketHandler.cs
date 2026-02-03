@@ -33,7 +33,7 @@ namespace TunnlR.API.WebSockets
                 var port = int.Parse(context.Request.Query["port"].ToString());
                 var protocol = context.Request.Query["protocol"].ToString();
 
-                var tunnelResponse = await _tunnelService.CreateTunnelAsync(userId, new TunnelCreateRequest
+                var tunnelResponse = await _tunnelService.CreateTunnelAsync(userId,connectionId, new TunnelCreateRequest
                 {
                     LocalPort = port,
                     Protocol = protocol

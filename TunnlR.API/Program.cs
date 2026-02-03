@@ -1,9 +1,10 @@
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using TunnlR.API.Middlewares;
+using TunnlR.API.WebSockets;
 using TunnlR.Application.Extensions;
 using TunnlR.Infrastructure.Extensions;
-using TunnlR.API.WebSockets;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,6 +63,7 @@ app.Map("/tunnel", async context =>
     }
 });
 
+app.UseMiddleware<TunnelProxyMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

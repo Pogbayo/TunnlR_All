@@ -13,7 +13,7 @@ builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
 builder.Services.AddHttpClient<AuthenticationService>();
-builder.Services.AddSingleton<TunnelService>();
+builder.Services.AddSingleton<CLITunnelService>();
 builder.Services.AddSingleton<TokenStorage>();
 builder.Services.AddSingleton<LoginCommand>();
 builder.Services.AddSingleton<SignUpCommand>();

@@ -6,7 +6,7 @@ using TunnlR.Application.DTOs.Tunnel;
 
 namespace TunnlR.CLI.Services
 {
-    public class TunnelService
+    public class CLITunnelService
     {
         private readonly IConfiguration _configuration;
         private ClientWebSocket? _websocket;
@@ -16,7 +16,7 @@ namespace TunnlR.CLI.Services
         public event EventHandler? TunnelClosed;
 
 
-        public TunnelService(IConfiguration configuration)
+        public CLITunnelService(IConfiguration configuration)
         {
             _configuration = configuration;
         }
@@ -32,7 +32,6 @@ namespace TunnlR.CLI.Services
 
             Console.WriteLine("✅ Connected to relay server!");
 
-            // Start listening in background
              _ = Task.Run(ListenAsync);
         }
 

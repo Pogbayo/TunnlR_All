@@ -18,34 +18,56 @@ namespace TunnlR.Application.Services.TunnelServices
 
         public async Task<TunnelCreateResponse> CreateTunnelAsync(
             Guid userId,
+            string connectionId,
             TunnelCreateRequest request)
         {
-            // Generate unique subdomain
-            var subdomain = Guid.NewGuid().ToString("N").Substring(0, 8);
-            var publicUrl = $"https://{subdomain}.tunnlr.dev";
-            var dashboardUrl = $"https://dashboard.tunnlr.dev/{subdomain}";
+            // Check if user already has an active tunnel
+            var existingTunnel = await _context.Tunnels
+                .FirstOrDefaultAsync(t => t.UserId == userId && t.Status == TunnelStatus.Active);
 
-            var tunnel = new Tunnel
+            if (existingTunnel != null)
             {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                PublicUrl = publicUrl,
-                DashboardUrl = dashboardUrl,
-                LocalPort = request.LocalPort,
-                Protocol = request.Protocol,
-                CreatedAt = DateTime.UtcNow,
-                Status = TunnelStatus.Active
-            };
+                existingTunnel.ConnectionId = connectionId;
+                existingTunnel.Status = TunnelStatus.Active;
+                existingTunnel.LocalPort = request.LocalPort;
+                await _context.SaveChangesAsync();
 
-            _context.Tunnels.Add(tunnel);
-            await _context.SaveChangesAsync();
-
-            return new TunnelCreateResponse
+                return new TunnelCreateResponse
+                {
+                    TunnelId = existingTunnel.Id,
+                    PublicUrl = existingTunnel.PublicUrl,
+                    DashboardUrl = existingTunnel.DashboardUrl
+                };
+            }
+            else
             {
-                TunnelId = tunnel.Id,
-                PublicUrl = tunnel.PublicUrl,
-                DashboardUrl = tunnel.DashboardUrl
-            };
+                var subdomain = Guid.NewGuid().ToString("N").Substring(0, 8);
+                var publicUrl = $"https://{subdomain}.tunnlr.dev";
+                var dashboardUrl = $"https://dashboard.tunnlr.dev/{subdomain}";
+
+                var tunnel = new Tunnel
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    ConnectionId = connectionId,
+                    PublicUrl = publicUrl,
+                    DashboardUrl = dashboardUrl,
+                    LocalPort = request.LocalPort,
+                    Protocol = request.Protocol,
+                    CreatedAt = DateTime.UtcNow,
+                    Status = TunnelStatus.Active
+                };
+
+                _context.Tunnels.Add(tunnel);
+                await _context.SaveChangesAsync();
+
+                return new TunnelCreateResponse
+                {
+                    TunnelId = tunnel.Id,
+                    PublicUrl = tunnel.PublicUrl,
+                    DashboardUrl = tunnel.DashboardUrl
+                };
+            }
         }
 
         public async Task<TunnelStatusResponse> GetTunnelStatusAsync(Guid tunnelId)
