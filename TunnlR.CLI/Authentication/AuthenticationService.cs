@@ -49,4 +49,4 @@ public class AuthenticationService
         return result ?? throw new Exception("Failed to deserialize register response");
     }
 }
-}
+

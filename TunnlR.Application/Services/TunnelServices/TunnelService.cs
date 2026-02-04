@@ -4,6 +4,7 @@ using TunnlR.Application.Interfaces.IService;
 using TunnlR.RelayServer.Persistence;
 using Domain.Enums;
 using TunnlR.Domain.Entities;
+using TunnlR.Application.DTOs.TunnelDto;
 
 namespace TunnlR.Application.Services.TunnelServices
 {
@@ -18,16 +19,13 @@ namespace TunnlR.Application.Services.TunnelServices
 
         public async Task<TunnelCreateResponse> CreateTunnelAsync(
             Guid userId,
-            string connectionId,
             TunnelCreateRequest request)
         {
-            // Check if user already has an active tunnel
             var existingTunnel = await _context.Tunnels
                 .FirstOrDefaultAsync(t => t.UserId == userId && t.Status == TunnelStatus.Active);
 
             if (existingTunnel != null)
             {
-                existingTunnel.ConnectionId = connectionId;
                 existingTunnel.Status = TunnelStatus.Active;
                 existingTunnel.LocalPort = request.LocalPort;
                 await _context.SaveChangesAsync();
@@ -49,7 +47,6 @@ namespace TunnlR.Application.Services.TunnelServices
                 {
                     Id = Guid.NewGuid(),
                     UserId = userId,
-                    ConnectionId = connectionId,
                     PublicUrl = publicUrl,
                     DashboardUrl = dashboardUrl,
                     LocalPort = request.LocalPort,
@@ -98,6 +95,25 @@ namespace TunnlR.Application.Services.TunnelServices
                 tunnel.Status = TunnelStatus.Inactive;
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<GetTunnelResponse> GetTunnelBySubDomain(string subdomain)
+        {
+            var tunnel = await _context.Tunnels
+                 .Where(t => t.PublicUrl.Contains(subdomain))
+                 .Select(t => new GetTunnelResponse
+                  {
+                      TunnelId = t.Id,
+                      PublicUrl = t.PublicUrl,
+                      Status = t.Status
+                  })
+                .FirstOrDefaultAsync();
+            if (tunnel == null)
+            {
+                Console.WriteLine("Tunnel is null");
+            }
+
+            return tunnel! ;
         }
     }
 }

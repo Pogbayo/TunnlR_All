@@ -7,7 +7,6 @@ namespace TunnlR.Domain.Entities
         public int LocalPort { get; set; }
         public required string PublicUrl { get; set; }
         public required string DashboardUrl { get; set; }
-        public string ConnectionId { get; set; } = string.Empty; 
         public string Protocol { get; set; } = "https";  
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }          

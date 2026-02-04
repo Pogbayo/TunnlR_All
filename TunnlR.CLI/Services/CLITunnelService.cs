@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
+using TunnlR.Application.DTOs.HttpDto;
 using TunnlR.Application.DTOs.Tunnel;
 
 namespace TunnlR.CLI.Services
@@ -10,10 +11,12 @@ namespace TunnlR.CLI.Services
     {
         private readonly IConfiguration _configuration;
         private ClientWebSocket? _websocket;
+        private int _localport;
 
         public event EventHandler<string>? MessageReceived;
         public event EventHandler<TunnelCreateResponse>? TunnelEstablished;
         public event EventHandler? TunnelClosed;
+        public event EventHandler? TunnelDeactivated;
 
 
         public CLITunnelService(IConfiguration configuration)
@@ -23,6 +26,7 @@ namespace TunnlR.CLI.Services
 
         public async Task ConnectAsync(string token, int localPort, string protocol)
         {
+            _localport = localPort; 
             var wsUrl = _configuration["RelayServer:WebSocketUrl"]!;
 
             _websocket = new ClientWebSocket();
@@ -75,14 +79,34 @@ namespace TunnlR.CLI.Services
                 }
                 else
                 {
+                    await ForwardToLocalhost(message);
                     MessageReceived?.Invoke(this, message);
                 }
             }
             catch
             {
+                await ForwardToLocalhost(message);
                 MessageReceived?.Invoke(this, message);
             }
 
+        }
+
+        private async Task ForwardToLocalhost(string httpRequestJson)
+        {
+            var request = JsonSerializer.Deserialize<HttpRequestData>(httpRequestJson);
+
+            using var httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri($"http://localhost:{_localport}");
+
+            var httpRequest = new HttpRequestMessage(
+                new HttpMethod(request!.Method),
+                request.Path);
+
+            var response = await httpClient.SendAsync(httpRequest);
+            var body = await response.Content.ReadAsStringAsync();
+
+            //forwards the response from the localost to the server directly
+            await SendAsync(body);
         }
 
         public async Task SendAsync(string message)
@@ -108,6 +132,14 @@ namespace TunnlR.CLI.Services
                     CancellationToken.None);
             }
             TunnelClosed?.Invoke(this, EventArgs.Empty);
+        }
+
+        public async Task DeactivateTunnel(Guid TunnelId)
+        {
+            var context = new HttpClient();
+            var serverUrl = _configuration["RelayServer:Url"];
+            var response = await context.DeleteAsync($"{serverUrl}/api/tunnel/deactivate/{TunnelId}");
+            response.EnsureSuccessStatusCode();
         }
     }
 }

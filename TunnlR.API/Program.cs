@@ -63,7 +63,7 @@ app.Map("/tunnel", async context =>
     }
 });
 
-app.UseMiddleware<TunnelProxyMiddleware>();
+app.UseMiddleware<TunnelProxyMiddleware>(); 
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

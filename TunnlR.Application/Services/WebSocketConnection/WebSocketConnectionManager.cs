@@ -2,31 +2,32 @@
 using System.Net.WebSockets;
 using System.Text;
 using TunnlR.Application.Interfaces.IService;
+
 namespace TunnlR.Application.Services.WebSocketConnection
 {
     public class WebSocketConnectionManager : IWebSocketConnectionManager
     {
-        private readonly ConcurrentDictionary<string,WebSocket> _connections = new();
+        private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
 
-        public void AddConnection(string connectionId,  WebSocket socket)
+        public void AddConnection(Guid tunnelId, WebSocket socket)
         {
-            _connections.TryAdd(connectionId, socket);
+            _connections.TryAdd(tunnelId.ToString(), socket);
         }
 
-        public WebSocket? GetConnection(string connectionId)
+        public WebSocket? GetConnection(Guid tunnelId)
         {
-            _connections.TryGetValue(connectionId, out var socket);
+            _connections.TryGetValue(tunnelId.ToString(), out var socket);
             return socket;
         }
 
-        public void RemoveConnection(string connectionId)
+        public void RemoveConnection(Guid tunnelId)
         {
-            _connections.TryRemove(connectionId, out _);
+            _connections.TryRemove(tunnelId.ToString(), out _);
         }
 
-        public async Task SendMessageAsync(string connectionId, string message)
+        public async Task SendMessageAsync(Guid tunnelId, string message)
         {
-            var socket = GetConnection(connectionId);
+            var socket = GetConnection(tunnelId);
             if (socket?.State == WebSocketState.Open)
             {
                 var bytes = Encoding.UTF8.GetBytes(message);
@@ -38,6 +39,7 @@ namespace TunnlR.Application.Services.WebSocketConnection
             }
         }
 
+        // Optional: Broadcast to all active tunnels
         public async Task BroadcastAsync(string message)
         {
             var tasks = _connections.Values
@@ -51,7 +53,6 @@ namespace TunnlR.Application.Services.WebSocketConnection
                         true,
                         CancellationToken.None);
                 });
-
             await Task.WhenAll(tasks);
         }
     }

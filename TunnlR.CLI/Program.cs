@@ -16,7 +16,7 @@ builder.Services.AddHttpClient<AuthenticationService>();
 builder.Services.AddSingleton<CLITunnelService>();
 builder.Services.AddSingleton<TokenStorage>();
 builder.Services.AddSingleton<LoginCommand>();
-builder.Services.AddSingleton<SignUpCommand>();
+builder.Services.AddSingleton<SignUpCommand>();  
 builder.Services.AddSingleton<StartCommand>();
 builder.Services.AddSingleton<StopCommand>();
 

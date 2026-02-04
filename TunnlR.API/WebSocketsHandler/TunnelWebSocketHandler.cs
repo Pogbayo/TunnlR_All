@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.Json;
 using TunnlR.Application.DTOs.Tunnel;
 using TunnlR.Application.Interfaces.IService;
+using TunnlR.Domain.Entities;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace TunnlR.API.WebSockets
 {
@@ -22,8 +24,7 @@ namespace TunnlR.API.WebSockets
 
         public async Task HandleConnectionAsync(HttpContext context,WebSocket webSocket)
         {
-            var connectionId = Guid.NewGuid().ToString();
-            _connectionManager.AddConnection(connectionId, webSocket);
+            var tunnelId = Guid.Empty;
 
             try
             {
@@ -33,24 +34,26 @@ namespace TunnlR.API.WebSockets
                 var port = int.Parse(context.Request.Query["port"].ToString());
                 var protocol = context.Request.Query["protocol"].ToString();
 
-                var tunnelResponse = await _tunnelService.CreateTunnelAsync(userId,connectionId, new TunnelCreateRequest
+                var tunnelResponse = await _tunnelService.CreateTunnelAsync(userId, new TunnelCreateRequest
                 {
                     LocalPort = port,
                     Protocol = protocol
                 });
+                tunnelId = tunnelResponse.TunnelId;
+                _connectionManager.AddConnection(tunnelId, webSocket);
 
                 var message = JsonSerializer.Serialize(tunnelResponse);
-                await _connectionManager.SendMessageAsync(connectionId, message);
+                await _connectionManager.SendMessageAsync(tunnelId, message);
 
-                await ReceiveMessagesAsync(webSocket, connectionId);
+                await ReceiveMessagesAsync(webSocket, tunnelId);
             }
             finally
             {
-                _connectionManager.RemoveConnection(connectionId);
+                _connectionManager.RemoveConnection(tunnelId);
             }
         }
          
-        private async Task ReceiveMessagesAsync(WebSocket  webSocket, string connectionId)
+        private async Task ReceiveMessagesAsync(WebSocket  webSocket, Guid tunnelId)
         {
             var buffer = new byte[1024 * 4];
 
@@ -73,7 +76,7 @@ namespace TunnlR.API.WebSockets
 
                     // Handle incoming traffic from CLI
                     // Forward to appropriate destination
-                    Console.WriteLine($"Received from {connectionId}: {message}");
+                    Console.WriteLine($"Received from {tunnelId}: {message}");
                 }
             }
         }

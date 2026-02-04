@@ -21,6 +21,7 @@
 	  <PackAsTool>true</PackAsTool>
 	  <ToolCommandName>tunnlr</ToolCommandName>
     <Nullable>enable</Nullable>
+    <UserSecretsId>7681358e-8bfe-43b8-bd36-d7ba486c2682</UserSecretsId>
   </PropertyGroup>
 
 </Project>

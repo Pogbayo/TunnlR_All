@@ -18,12 +18,19 @@ namespace TunnlR.API.Controllers
             _tunnelService = tunnelService;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateTunnel([FromBody] TunnelCreateRequest request)
+        //[HttpPost]
+        //public async Task<IActionResult> CreateTunnel([FromBody] TunnelCreateRequest request)
+        //{
+        //    var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        //    var response = await _tunnelService.CreateTunnelAsync(userId, request);
+        //    return Ok(response);
+        //}
+
+        [HttpDelete("tunnel/deativate/{tunnelId}")]
+        public async Task<IActionResult> DeactivateTunnel(Guid tunnelId)
         {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var response = await _tunnelService.CreateTunnelAsync(userId, request);
-            return Ok(response);
+            await _tunnelService.DeactivateTunnelAsync(tunnelId);
+            return NoContent();
         }
 
         [HttpGet("{tunnelId}/status")]

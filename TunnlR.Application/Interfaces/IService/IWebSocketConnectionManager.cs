@@ -1,13 +1,15 @@
 ﻿
 
+using System.Net.WebSockets;
+
 namespace TunnlR.Application.Interfaces.IService
 {
     public interface IWebSocketConnectionManager
     {
-        void AddConnection(string connectionId, System.Net.WebSockets.WebSocket socket);
-        System.Net.WebSockets.WebSocket? GetConnection(string connectionId);
-        void RemoveConnection(string connectionId);
-        Task SendMessageAsync(string connectionId, string message);
+        void AddConnection(Guid TunnelId, WebSocket socket);
+        WebSocket? GetConnection(Guid TunnelId);
+        void RemoveConnection(Guid TunnelId);
+        Task SendMessageAsync(Guid TunnelId, string message);
         Task BroadcastAsync(string message);
     }
 }
