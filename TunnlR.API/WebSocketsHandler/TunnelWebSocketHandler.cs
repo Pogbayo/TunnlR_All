@@ -1,11 +1,11 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.Collections.Concurrent;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using TunnlR.Application.DTOs.Tunnel;
 using TunnlR.Application.Interfaces.IService;
-using TunnlR.Domain.Entities;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using TunnlR.Contract.DTOs.Auth;
+using TunnlR.Contract.DTOs.TunnelDto;
 
 namespace TunnlR.API.WebSockets
 {
@@ -13,6 +13,7 @@ namespace TunnlR.API.WebSockets
     {
         private readonly IWebSocketConnectionManager _connectionManager;
         private readonly ITunnelService _tunnelService;
+        private static readonly ConcurrentDictionary<Guid, TaskCompletionSource<string>> _pendingRequests = new();
 
         public TunnelWebSocketHandler(
             IWebSocketConnectionManager connectionManager,
@@ -74,11 +75,45 @@ namespace TunnlR.API.WebSockets
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-                    // Handle incoming traffic from CLI
-                    // Forward to appropriate destination
+                    try
+                    {
+                        var responseData = JsonSerializer.Deserialize<HttpResponseData>(message);
+
+                        if (responseData?.RequestId != null)
+                        {
+                            if (_pendingRequests.TryRemove(responseData.RequestId, out var tcs))
+                            {
+                                tcs.SetResult(responseData.Body);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        Console.WriteLine($"Received from {tunnelId}: {message}");
+                    }
                     Console.WriteLine($"Received from {tunnelId}: {message}");
                 }
             }
+        }
+
+        public static async Task<string> WaitForResponse(Guid requestId, TimeSpan timeout)
+        {
+            var tcs = new TaskCompletionSource<string>();
+
+            _pendingRequests[requestId] = tcs;
+
+            var delayTask = Task.Delay(timeout);
+            var responseTask = tcs.Task;
+
+            var completedTask = await Task.WhenAny(responseTask, delayTask);
+
+            if (completedTask == delayTask)
+            {
+                _pendingRequests.TryRemove(requestId, out _);
+                throw new TimeoutException("CLI did not respond in time");
+            }
+
+            return await responseTask;
         }
 
         private Guid ExtractUserIdFromToken(string token)

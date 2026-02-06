@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TunnlR.Domain.Entities;
 
 namespace TunnlR.Infrastructure.Configuration
 {
@@ -21,7 +16,6 @@ namespace TunnlR.Infrastructure.Configuration
                 .ValueGeneratedOnAddOrUpdate();
 
             builder.HasQueryFilter(u => !u.IsDeleted);
-
             
             builder.HasMany(u => u.Tunnels)
                 .WithOne(t => t.User)

@@ -1,7 +1,5 @@
-﻿
-using Domain.Enums;
-
-namespace TunnlR.Application.DTOs.TunnelDto
+﻿using TunnlR.Contract.DTOs.Enums;
+namespace TunnlR.Contract.DTOs.TunnelDto
 {
     public class GetTunnelResponse
     {

@@ -1,8 +1,8 @@
 ﻿using TunnlR.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
-using TunnlR.Application.DTOs.Auth;
 using TunnlR.Application.Interfaces.IService;
 using TunnlR.Infrastructure.TokenAuthentication;
+using TunnlR.Contract.DTOs.Auth;
 
 namespace TunnlR.Application.Services.Auth
 {
@@ -37,6 +37,7 @@ namespace TunnlR.Application.Services.Auth
                 ExpiresAt = DateTime.UtcNow.AddHours(24)
             };
         }
+
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
         {

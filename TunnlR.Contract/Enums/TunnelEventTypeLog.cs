@@ -1,4 +1,4 @@
-﻿namespace TunnlR.Domain.DTOs.Auth
+﻿namespace TunnlR.Contract.Enums
 {
     public enum TunnelEventTypeLog
     {

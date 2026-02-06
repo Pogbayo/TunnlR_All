@@ -1,4 +1,4 @@
-﻿namespace TunnlR.Application.DTOs.Auth
+﻿namespace TunnlR.Contract.DTOs.Auth
 {
     public class LoginResponse
     {

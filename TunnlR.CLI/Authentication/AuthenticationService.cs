@@ -1,7 +1,6 @@
-﻿
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using Microsoft.Extensions.Configuration;
-using TunnlR.Application.DTOs.Auth;
+using TunnlR.Contract.DTOs.Auth;
 
 public class AuthenticationService
 {

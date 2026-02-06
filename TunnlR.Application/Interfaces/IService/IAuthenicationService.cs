@@ -1,4 +1,5 @@
-﻿using TunnlR.Application.DTOs.Auth;
+﻿
+using TunnlR.Contract.DTOs.Auth;
 
 namespace TunnlR.Application.Interfaces.IService
 {

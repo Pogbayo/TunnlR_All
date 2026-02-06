@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TunnlR.Application.DTOs.Auth;
 using TunnlR.Application.Interfaces.IService;
-using TunnlR.Application.Services.Auth;
+using TunnlR.Contract.DTOs.Auth;
 
 namespace TunnlR.API.Controllers
 {

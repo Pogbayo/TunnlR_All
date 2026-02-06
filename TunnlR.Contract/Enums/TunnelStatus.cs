@@ -1,4 +1,4 @@
-﻿namespace TunnlR.Domain.DTOs.Enums
+﻿namespace TunnlR.Contract.DTOs.Enums
 {
     public enum TunnelStatus
     {

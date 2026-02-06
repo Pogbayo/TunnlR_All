@@ -1,5 +1,4 @@
-﻿
-namespace TunnlR.Application.DTOs.Tunnel
+﻿namespace TunnlR.Contract.DTOs.TunnelDto
 {
     public class TunnelCreateRequest
     {

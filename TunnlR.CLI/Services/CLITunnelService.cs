@@ -2,8 +2,8 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
-using TunnlR.Application.DTOs.HttpDto;
-using TunnlR.Application.DTOs.Tunnel;
+using TunnlR.Contract.DTOs.Auth;
+using TunnlR.Contract.DTOs.TunnelDto;
 
 namespace TunnlR.CLI.Services
 {
@@ -96,7 +96,7 @@ namespace TunnlR.CLI.Services
             var request = JsonSerializer.Deserialize<HttpRequestData>(httpRequestJson);
 
             using var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri($"http://localhost:{_localport}");
+            httpClient.BaseAddress = new Uri($"http://localhost:{_localport}{request!.Path}");
 
             var httpRequest = new HttpRequestMessage(
                 new HttpMethod(request!.Method),
@@ -105,8 +105,17 @@ namespace TunnlR.CLI.Services
             var response = await httpClient.SendAsync(httpRequest);
             var body = await response.Content.ReadAsStringAsync();
 
-            //forwards the response from the localost to the server directly
-            await SendAsync(body);
+            var responseData = new HttpResponseData
+            {
+                RequestId = request.RequestId, 
+                StatusCode = (int)response.StatusCode,
+                Body = body,
+                Headers = response.Headers.ToDictionary(h => h.Key, h => h.Value.ToString() ?? string.Empty)
+            };
+
+            var responseJson = JsonSerializer.Serialize(responseData);
+
+            await SendAsync(responseJson);
         }
 
         public async Task SendAsync(string message)

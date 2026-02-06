@@ -13,7 +13,6 @@ namespace TunnlR.Domain.Entities
         public DateTime? UpdatedAt { get; set; }
         public bool IsDeleted { get; set; } = false;
         public ICollection<Tunnel> Tunnels { get; set; } = new List<Tunnel>();
-
         public void MarkAsDeleted() => IsDeleted = true;
 
     }

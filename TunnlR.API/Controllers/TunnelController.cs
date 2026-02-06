@@ -1,7 +1,5 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TunnlR.Application.DTOs.Tunnel;
 using TunnlR.Application.Interfaces.IService;
 
 namespace TunnlR.API.Controllers

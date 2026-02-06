@@ -2,7 +2,7 @@
 using TunnlR.Application.Interfaces.IService;
 using TunnlR.Application.Services.Auth;
 using TunnlR.Application.Services.TunnelServices;
-using TunnlR.Application.Services.WebSocket;
+using TunnlR.Application.Services.WebSocketConnection;
 
 namespace TunnlR.Application.Extensions
 {

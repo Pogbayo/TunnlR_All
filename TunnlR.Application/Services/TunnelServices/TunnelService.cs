@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TunnlR.Application.DTOs.Tunnel;
 using TunnlR.Application.Interfaces.IService;
 using TunnlR.RelayServer.Persistence;
-using Domain.Enums;
 using TunnlR.Domain.Entities;
-using TunnlR.Application.DTOs.TunnelDto;
+using TunnlR.Contract.DTOs.Enums;
+using TunnlR.Application.Mappings;
+using TunnlR.Contract.DTOs.TunnelDto;
 
 namespace TunnlR.Application.Services.TunnelServices
 {
@@ -22,11 +22,11 @@ namespace TunnlR.Application.Services.TunnelServices
             TunnelCreateRequest request)
         {
             var existingTunnel = await _context.Tunnels
-                .FirstOrDefaultAsync(t => t.UserId == userId && t.Status == TunnelStatus.Active);
+                .FirstOrDefaultAsync(t => t.UserId == userId && t.Status == Domain.DTOs.Enums.TunnelStatus.Inactive);
 
             if (existingTunnel != null)
             {
-                existingTunnel.Status = TunnelStatus.Active;
+                existingTunnel.Status = Domain.DTOs.Enums.TunnelStatus.Inactive;
                 existingTunnel.LocalPort = request.LocalPort;
                 await _context.SaveChangesAsync();
 
@@ -52,7 +52,7 @@ namespace TunnlR.Application.Services.TunnelServices
                     LocalPort = request.LocalPort,
                     Protocol = request.Protocol,
                     CreatedAt = DateTime.UtcNow,
-                    Status = TunnelStatus.Active
+                    Status = Domain.DTOs.Enums.TunnelStatus.Inactive 
                 };
 
                 _context.Tunnels.Add(tunnel);
@@ -92,7 +92,7 @@ namespace TunnlR.Application.Services.TunnelServices
             var tunnel = await _context.Tunnels.FindAsync(tunnelId);
             if (tunnel != null)
             {
-                tunnel.Status = TunnelStatus.Inactive;
+                tunnel.Status = (Domain.DTOs.Enums.TunnelStatus)TunnelStatus.Inactive;
                 await _context.SaveChangesAsync();
             }
         }
@@ -102,18 +102,19 @@ namespace TunnlR.Application.Services.TunnelServices
             var tunnel = await _context.Tunnels
                  .Where(t => t.PublicUrl.Contains(subdomain))
                  .Select(t => new GetTunnelResponse
-                  {
-                      TunnelId = t.Id,
-                      PublicUrl = t.PublicUrl,
-                      Status = t.Status
-                  })
+                 {
+                     TunnelId = t.Id,
+                     PublicUrl = t.PublicUrl,
+                     Status = TunnelStatusMapper.ToContract(t.Status)
+                 })
                 .FirstOrDefaultAsync();
             if (tunnel == null)
             {
                 Console.WriteLine("Tunnel is null");
             }
 
-            return tunnel! ;
+            return tunnel!;
         }
+
     }
 }

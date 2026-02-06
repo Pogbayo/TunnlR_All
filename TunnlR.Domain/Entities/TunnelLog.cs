@@ -1,4 +1,4 @@
-﻿using Application.Enums;
+﻿using TunnlR.Domain.DTOs.Auth;
 
 namespace TunnlR.Domain.Entities
 {

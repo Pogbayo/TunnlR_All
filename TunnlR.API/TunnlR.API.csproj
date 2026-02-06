@@ -15,6 +15,7 @@
 
   <ItemGroup>
 	  <ProjectReference Include="..\TunnlR.Application\TunnlR.Application.csproj" />
+	  <ProjectReference Include="..\TunnlR.Contract\TunnlR.Contract.csproj" />
   </ItemGroup>
 
 </Project>

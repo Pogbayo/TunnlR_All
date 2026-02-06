@@ -4,9 +4,9 @@ namespace TunnlR.CLI.Commands
 {
     public class StopCommand
     {
-        private readonly TunnelService _tunnelService;
+        private readonly CLITunnelService _tunnelService;
 
-        public StopCommand(TunnelService tunnelService)
+        public StopCommand(CLITunnelService tunnelService)
         {
             _tunnelService = tunnelService;
         }

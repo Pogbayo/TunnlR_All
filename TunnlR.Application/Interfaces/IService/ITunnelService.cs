@@ -1,6 +1,5 @@
-﻿
-using TunnlR.Application.DTOs.Tunnel;
-using TunnlR.Application.DTOs.TunnelDto;
+﻿using TunnlR.Contract.DTOs.Auth;
+using TunnlR.Contract.DTOs.TunnelDto;
 
 namespace TunnlR.Application.Interfaces.IService
 {

@@ -6,6 +6,7 @@ using TunnlR.CLI.Configuration;
 using TunnlR.CLI.Services;
 using TunnlRCLI.Helpers;
 
+
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Configuration

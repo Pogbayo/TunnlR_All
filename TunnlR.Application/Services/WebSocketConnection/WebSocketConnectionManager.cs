@@ -39,7 +39,6 @@ namespace TunnlR.Application.Services.WebSocketConnection
             }
         }
 
-        // Optional: Broadcast to all active tunnels
         public async Task BroadcastAsync(string message)
         {
             var tasks = _connections.Values

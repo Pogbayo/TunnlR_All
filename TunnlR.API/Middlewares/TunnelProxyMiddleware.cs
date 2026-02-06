@@ -1,6 +1,6 @@
 ﻿using System.Net.WebSockets;
 using System.Text.Json;
-using Domain.Enums;
+using TunnlR.API.WebSockets;
 using TunnlR.Application.Interfaces.IService;
 using TunnlR.Application.Services.TunnelServices;
 
@@ -31,7 +31,7 @@ namespace TunnlR.API.Middlewares
             }
 
             var tunnel = await _tunnelService.GetTunnelBySubDomain(subdomain);
-            if (tunnel.Status != TunnelStatus.Active)
+            if (tunnel.Status != Contract.DTOs.Enums.TunnelStatus.Active)
             {
                 context.Response.StatusCode = 404;
                 await context.Response.WriteAsync("Tunnel is inactive");
@@ -47,19 +47,33 @@ namespace TunnlR.API.Middlewares
 
             }
 
-            var requestData = await SerializeHttpRequest(context.Request);
+            var requestId = Guid.NewGuid();
+
+            var requestData = await SerializeHttpRequest(context.Request, requestId);
             await _wsManager.SendMessageAsync(tunnel.TunnelId, requestData);
 
-            //var cliResponse = await WaitForResponse(tunnelId);
+            try
+            {
+                 var cliResponse = await TunnelWebSocketHandler.WaitForResponse(
+                    requestId,
+                    TimeSpan.FromSeconds(30)
+                );
 
-            context.Response.StatusCode = 200;
-            await context.Response.WriteAsync("Request forwarded (placeholder)");
+                context.Response.StatusCode = 200;
+                await context.Response.WriteAsync(cliResponse);
+            }
+            catch (TimeoutException)
+            {
+                context.Response.StatusCode = 504;
+                await context.Response.WriteAsync("Gateway timeout");
+            }
         }
 
-        private async Task<string> SerializeHttpRequest(HttpRequest request)
+        private async Task<string> SerializeHttpRequest(HttpRequest request,Guid requestId)
         {
             return JsonSerializer.Serialize(new
             {
+                RequestId = requestId,
                 Method = request.Method,
                 Path = request.Path,
                 Headers = request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()),

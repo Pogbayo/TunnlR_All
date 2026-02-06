@@ -1,8 +1,8 @@
-﻿using TunnlR.Application.DTOs.Tunnel;
-using TunnlR.Application.Services.TunnelServices;
-using TunnlR.CLI.Configuration;
+﻿using TunnlR.CLI.Configuration;
 using TunnlRCLI.Helpers;
 using TunnlR.CLI.Services;
+using TunnlR.Contract.DTOs.Auth;
+using TunnlR.Contract.DTOs.TunnelDto;
 namespace TunnlR.CLI.Commands
 {
     public class StartCommand
