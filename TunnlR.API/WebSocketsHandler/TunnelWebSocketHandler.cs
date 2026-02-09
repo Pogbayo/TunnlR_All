@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.WebSockets;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using TunnlR.Application.Interfaces.IService;
@@ -26,11 +27,10 @@ namespace TunnlR.API.WebSockets
         public async Task HandleConnectionAsync(HttpContext context,WebSocket webSocket)
         {
             var tunnelId = Guid.Empty;
-
             try
             {
                 var token = context.Request.Query["token"].ToString();
-                var userId = ExtractUserIdFromToken(token);
+                var userId = ExtractUserIdFromToken(token); 
 
                 var port = int.Parse(context.Request.Query["port"].ToString());
                 var protocol = context.Request.Query["protocol"].ToString();
@@ -40,8 +40,11 @@ namespace TunnlR.API.WebSockets
                     LocalPort = port,
                     Protocol = protocol
                 });
+
                 tunnelId = tunnelResponse.TunnelId;
+                Console.WriteLine("Relay: WebSocket accepted from CLI. Token: " + token);
                 _connectionManager.AddConnection(tunnelId, webSocket);
+                Console.WriteLine($"Registered WebSocket for TunnelId {tunnelId}");
 
                 var message = JsonSerializer.Serialize(tunnelResponse);
                 await _connectionManager.SendMessageAsync(tunnelId, message);
@@ -57,42 +60,52 @@ namespace TunnlR.API.WebSockets
         private async Task ReceiveMessagesAsync(WebSocket  webSocket, Guid tunnelId)
         {
             var buffer = new byte[1024 * 4];
-
-            while (webSocket.State == WebSocketState.Open)
+            try
             {
-                var result = await webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer),
-                    CancellationToken.None);
-
-                if (result.MessageType == WebSocketMessageType.Close)
+                while (webSocket.State == WebSocketState.Open)
                 {
-                    await webSocket.CloseAsync(
-                        WebSocketCloseStatus.NormalClosure,
-                        "Closing",
+                    var result = await webSocket.ReceiveAsync(
+                        new ArraySegment<byte>(buffer),
                         CancellationToken.None);
-                }
-                else
-                {
-                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-                    try
+                    if (result.MessageType == WebSocketMessageType.Close)
                     {
-                        var responseData = JsonSerializer.Deserialize<HttpResponseData>(message);
+                        await webSocket.CloseAsync(
+                            WebSocketCloseStatus.NormalClosure,
+                            "Closing",
+                            CancellationToken.None);
+                    }
+                    else
+                    {
+                        var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-                        if (responseData?.RequestId != null)
+                        try
                         {
-                            if (_pendingRequests.TryRemove(responseData.RequestId, out var tcs))
+                            var responseData = JsonSerializer.Deserialize<HttpResponseData>(message);
+
+                            if (responseData?.RequestId != null)
                             {
-                                tcs.SetResult(responseData.Body);
+                                if (_pendingRequests.TryRemove(responseData.RequestId, out var tcs))
+                                {
+                                    tcs.SetResult(responseData.Body);
+                                }
                             }
                         }
-                    }
-                    catch
-                    {
+                        catch
+                        {
+                            Console.WriteLine($"Received from {tunnelId}: {message}");
+                        }
                         Console.WriteLine($"Received from {tunnelId}: {message}");
                     }
-                    Console.WriteLine($"Received from {tunnelId}: {message}");
                 }
+            }
+            catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely) 
+            {
+                Console.WriteLine($"Tunnel {tunnelId} disconnected");
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine($"Error in ReceiveMessages for {tunnelId}: {ex.Message}");
             }
         }
 
@@ -120,7 +133,11 @@ namespace TunnlR.API.WebSockets
         {
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
-            var userIdClaim = jwtToken.Claims.First(c => c.Type == "nameid").Value;
+            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+                throw new InvalidOperationException("JWT token does not contain 'NameIdentifier' claim.");
+
             return Guid.Parse(userIdClaim);
         }
     }

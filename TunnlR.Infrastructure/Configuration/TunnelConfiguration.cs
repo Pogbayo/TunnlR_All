@@ -8,9 +8,6 @@ namespace TunnlR.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<Tunnel> builder)
         {
-
-            builder.HasKey(t => t.Id);
-
             builder.Property(t => t.PublicUrl)
                 .IsRequired()
                 .HasMaxLength(70);
@@ -28,12 +25,12 @@ namespace TunnlR.Infrastructure.Configurations
             builder.HasMany(t => t.TunnelTraffics)
                 .WithOne()  
                 .HasForeignKey(c => c.TunnelId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasMany(t => t.TunnelLogs)
                 .WithOne()
                 .HasForeignKey(l => l.TunnelId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

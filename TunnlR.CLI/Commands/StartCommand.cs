@@ -1,18 +1,17 @@
 ﻿using TunnlR.CLI.Configuration;
 using TunnlRCLI.Helpers;
 using TunnlR.CLI.Services;
-using TunnlR.Contract.DTOs.Auth;
 using TunnlR.Contract.DTOs.TunnelDto;
 namespace TunnlR.CLI.Commands
 {
     public class StartCommand
     {
-        private readonly CLITunnelService _clitunnelService;
+        private readonly CLITunnelService _cliTunnelService;
         private readonly TokenStorage _tokenStorage;
 
-        public StartCommand(CLITunnelService clitunnelService, TokenStorage tokenStorage)
+        public StartCommand(CLITunnelService cliTunnelService, TokenStorage tokenStorage)
         {
-            _clitunnelService = clitunnelService;
+            _cliTunnelService = cliTunnelService;
             _tokenStorage = tokenStorage;
         }
 
@@ -29,27 +28,46 @@ namespace TunnlR.CLI.Commands
             Console.WriteLine($"Starting tunnel on port {port}...");
             ConsoleHelpers.PrintLoadingBar("Connecting", 20, 50);
 
-            await _clitunnelService.ConnectAsync(token, port, protocol);
+            var tunnelEstablishedTcs = new TaskCompletionSource<bool>();
 
-            _clitunnelService.TunnelEstablished += OnTunnelEstablished;
-            _clitunnelService.MessageReceived += OnMessageReceived;
+            _cliTunnelService.TunnelEstablished += (s, tunnelInfo) =>
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("\n✅ Tunnel started!");
+                Console.WriteLine($"Public URL: {tunnelInfo.PublicUrl}");
+                Console.WriteLine($"Dashboard: {tunnelInfo.DashboardUrl}");
+                Console.ResetColor();
+                tunnelEstablishedTcs.TrySetResult(true);
+            };
 
-            Console.WriteLine("\nPress Ctrl+C to stop the tunnel...");
-            await Task.Delay(Timeout.Infinite);
-        }
-        private void OnTunnelEstablished(object? sender, TunnelCreateResponse tunnelInfo)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("\n✅ Tunnel started!");
-            Console.WriteLine($"Public URL: {tunnelInfo.PublicUrl}");
-            Console.WriteLine($"Dashboard: {tunnelInfo.DashboardUrl}");
-            Console.ResetColor();
-        }
+            _cliTunnelService.TunnelFailed += (s, errorMessage) =>
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"\n❌ Tunnel failed: {errorMessage}");
+                Console.ResetColor();
+                tunnelEstablishedTcs.TrySetResult(false); 
+            };
 
+            _cliTunnelService.MessageReceived += (s, message) =>
+            {
+                Console.WriteLine($"📨 Message: {message}");
+            };
 
-        private void OnMessageReceived(object? sender, string message)
-        {
-            Console.WriteLine($"📨 Message: {message}");
+            await _cliTunnelService.ConnectAsync(token, port, protocol);
+
+            var success = await tunnelEstablishedTcs.Task;
+
+            if (success)
+            {
+                Console.WriteLine("\nPress Ctrl+C to stop the tunnel...");
+                await Task.Delay(Timeout.Infinite); 
+            }
+            else
+            {
+                Console.WriteLine("Tunnel could not be established. Exiting CLI.");
+            }
         }
     }
 }
+
+ 

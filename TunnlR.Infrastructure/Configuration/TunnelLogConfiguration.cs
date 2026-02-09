@@ -8,9 +8,6 @@ namespace TunnlR.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<TunnelLog> builder)
         {
-
-            builder.HasKey(l => l.Id);
-
             builder.Property(l => l.Message)
                 .HasMaxLength(1000);
 

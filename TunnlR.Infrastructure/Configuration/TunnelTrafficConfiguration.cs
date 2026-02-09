@@ -8,9 +8,6 @@ namespace TunnlR.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<TunnelTraffic> builder)
         {
-
-            builder.HasKey(t => t.Id);
-
             builder.Property(t => t.ClientIp)
                 .HasMaxLength(45);
 

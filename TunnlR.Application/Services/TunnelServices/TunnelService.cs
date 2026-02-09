@@ -22,11 +22,11 @@ namespace TunnlR.Application.Services.TunnelServices
             TunnelCreateRequest request)
         {
             var existingTunnel = await _context.Tunnels
-                .FirstOrDefaultAsync(t => t.UserId == userId && t.Status == Domain.DTOs.Enums.TunnelStatus.Inactive);
+                .FirstOrDefaultAsync(t => t.UserId == userId && t.Status == Domain.DTOs.Enums.TunnelStatus.Active);
 
             if (existingTunnel != null)
             {
-                existingTunnel.Status = Domain.DTOs.Enums.TunnelStatus.Inactive;
+                existingTunnel.Status = Domain.DTOs.Enums.TunnelStatus.Active;
                 existingTunnel.LocalPort = request.LocalPort;
                 await _context.SaveChangesAsync();
 
@@ -52,7 +52,7 @@ namespace TunnlR.Application.Services.TunnelServices
                     LocalPort = request.LocalPort,
                     Protocol = request.Protocol,
                     CreatedAt = DateTime.UtcNow,
-                    Status = Domain.DTOs.Enums.TunnelStatus.Inactive 
+                    Status = Domain.DTOs.Enums.TunnelStatus.Active 
                 };
 
                 _context.Tunnels.Add(tunnel);
@@ -85,6 +85,12 @@ namespace TunnlR.Application.Services.TunnelServices
                 //BytesTransferred = sessions.TunnelTraffics.Sum(s => s.BytesTransferred),
                 RequestCount = sessions.Count
             };
+        }
+
+
+        public async Task<Tunnel?> GetTunnelById(Guid id)
+        {
+            return await _context.Tunnels.FindAsync(id);
         }
 
         public async Task DeactivateTunnelAsync(Guid tunnelId)

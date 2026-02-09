@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using TunnlR.CLI.Commands;
 using TunnlR.CLI.Configuration;
 using TunnlR.CLI.Services;
@@ -11,7 +12,9 @@ var builder = Host.CreateApplicationBuilder(args);
 
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddUserSecrets<Program>()
+    .AddEnvironmentVariables();
 
 builder.Services.AddHttpClient<AuthenticationService>();
 builder.Services.AddSingleton<CLITunnelService>();
@@ -20,6 +23,14 @@ builder.Services.AddSingleton<LoginCommand>();
 builder.Services.AddSingleton<SignUpCommand>();  
 builder.Services.AddSingleton<StartCommand>();
 builder.Services.AddSingleton<StopCommand>();
+builder.Logging.ClearProviders();
+builder.Logging.AddSimpleConsole(options =>
+{
+    options.TimestampFormat = "[HH:mm:ss] ";
+    options.SingleLine = true;  
+});
+builder.Logging.SetMinimumLevel(LogLevel.Warning); 
+builder.Logging.AddFilter("TunnlR.CLI", LogLevel.Information); 
 
 var host = builder.Build();
 

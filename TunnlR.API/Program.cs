@@ -13,6 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<TunnelWebSocketHandler>();
+
 
 // Add layers
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -48,6 +50,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseWebSockets();
 
+app.UseMiddleware<TunnelProxyTestMiddleware>();
+app.UseMiddleware<TunnelProxyMiddleware>();
+
 // WebSocket endpoint
 app.Map("/tunnel", async context =>
 {
@@ -63,7 +68,6 @@ app.Map("/tunnel", async context =>
     }
 });
 
-app.UseMiddleware<TunnelProxyMiddleware>(); 
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

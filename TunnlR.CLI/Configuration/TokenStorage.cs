@@ -18,6 +18,7 @@
 
         public async Task SaveTokenAsync(string token)
         {
+            DeleteToken();
             await File.WriteAllTextAsync(_tokenFilePath, token);
         }
 

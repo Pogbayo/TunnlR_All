@@ -17,7 +17,7 @@ namespace TunnlR.Infrastructure.Extensions
                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
             services.AddDbContext<TunnelDbContext>(options =>
-                options.UseSqlite(connectionString));
+                options.UseSqlServer(connectionString));
 
             // Identity
             services.AddIdentity<AppUser, IdentityRole<Guid>>()

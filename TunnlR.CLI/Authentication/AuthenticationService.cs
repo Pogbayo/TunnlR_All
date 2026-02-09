@@ -12,7 +12,7 @@ public class AuthenticationService
         _httpClient = httpClient;
         _configuration = configuration;
         
-        var serverUrl = _configuration["RelayServer:Url"] 
+        var serverUrl = _configuration["RelayServer:HttpUrl"] 
             ?? throw new InvalidOperationException("RelayServer:Url not configured");
         _httpClient.BaseAddress = new Uri(serverUrl);
     }
