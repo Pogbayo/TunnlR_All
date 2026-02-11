@@ -25,7 +25,7 @@ namespace TunnlR.Infrastructure.Extensions
                 .AddDefaultTokenProviders();
 
             //I just built a ci/cd pipeline 
-            //Token
+            //Token generator
             services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
             return services;
