@@ -24,7 +24,7 @@ namespace TunnlR.Infrastructure.Extensions
                 .AddEntityFrameworkStores<TunnelDbContext>()
                 .AddDefaultTokenProviders();
 
-            //I just built a ci/cd pipeline to test bbh
+            //I just built a ci/cd pipeline 
             //Token
             services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
