@@ -5,6 +5,7 @@
 
 # Sensitive files
 *.tfvars   # contains secrets like SSH path, IPs
+*.tf
 
 # OS / IDE
 *.log
