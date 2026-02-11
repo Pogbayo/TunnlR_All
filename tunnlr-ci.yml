@@ -36,7 +36,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /var/www/tunnlr
-            git pull origin main
-            dotnet build -c Release
+            cd /var/www/TunnlR_All
+            git pull origin master
+            dotnet build -c Release -o out
             sudo systemctl restart tunnlr
