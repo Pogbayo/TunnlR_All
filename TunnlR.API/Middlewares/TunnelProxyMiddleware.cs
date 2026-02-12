@@ -34,45 +34,45 @@ namespace TunnlR.API.Middlewares
             var requestId = Guid.NewGuid(); // Unique request ID
             var localPath = string.Empty;
 
-            Console.WriteLine("Got to the TunnelMiddleware entrance");
+            //Console.WriteLine("Got to the TunnelMiddleware entrance");
             // Step 1: Check for local test tunnel request
 
             if (_urlHandler.TryGetTunnelId(path, out var tunnelId))
             {
-                Console.WriteLine("Entered local test block");
-                Console.WriteLine($"TunnelId parsed: {tunnelId}");
+                //Console.WriteLine("Entered local test block");
+                //Console.WriteLine($"TunnelId parsed: {tunnelId}");
 
                 localPath = _urlHandler.GetLocalPath(path);
-                Console.WriteLine($"Local path extracted: {localPath}");
+                //Console.WriteLine($"Local path extracted: {localPath}");
 
-                Console.WriteLine("Starting SerializeHttpRequest...");
+                //Console.WriteLine("Starting SerializeHttpRequest...");
                 var requestData = await SerializeHttpRequest(context.Request, localPath, requestId);
-                Console.WriteLine("SerializeHttpRequest finished");
+                //Console.WriteLine("SerializeHttpRequest finished");
 
-                Console.WriteLine("Fetching socket...");
+                //Console.WriteLine("Fetching socket...");
                 var socket = await _urlHandler.GetActiveSocketAsync(tunnelId);
-                Console.WriteLine($"Socket fetched: {(socket == null ? "NULL" : socket.State.ToString())}");
+                //Console.WriteLine($"Socket fetched: {(socket == null ? "NULL" : socket.State.ToString())}");
 
                 if (socket == null || socket.State != WebSocketState.Open)
                 {
-                    Console.WriteLine("Socket invalid/offline → returning 503");
+                    //Console.WriteLine("Socket invalid/offline → returning 503");
                     context.Response.StatusCode = 503;
                     await context.Response.WriteAsync("Tunnel offline");
                     return;
                 }
 
-                Console.WriteLine("Sending message to CLI...");
+                //Console.WriteLine("Sending message to CLI...");
                 await _wsManager.SendMessageAsync(tunnelId, requestData);
-                Console.WriteLine("Message sent");
+                //Console.WriteLine("Message sent");
 
                 try
                 {
-                    Console.WriteLine("Waiting for response (30s timeout)...");
+                    //Console.WriteLine("Waiting for response (30s timeout)...");
                     var cliResponse = await TunnelWebSocketHandler.WaitForResponse(requestId, TimeSpan.FromSeconds(30));
-                    Console.WriteLine("Response received from CLI");
+                    //Console.WriteLine("Response received from CLI");
                     context.Response.StatusCode = 200;
                     await context.Response.WriteAsync(cliResponse);
-                    Console.WriteLine("Response written to browser");
+                    //Console.WriteLine("Response written to browser");
                 }
                 catch (TimeoutException )
                 {

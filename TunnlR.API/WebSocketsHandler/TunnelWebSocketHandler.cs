@@ -72,7 +72,7 @@ namespace TunnlR.API.WebSockets
 
                 tunnelId = tunnelResponse.TunnelId;
 
-                Console.WriteLine("Relay: WebSocket accepted from CLI. Token: " + token);
+                //Console.WriteLine("Relay: WebSocket accepted from CLI. Token: " + token);
                 _connectionManager.AddConnection(tunnelId, webSocket);
                 Console.WriteLine($"Registered WebSocket for TunnelId {tunnelId}");
 
@@ -128,7 +128,7 @@ namespace TunnlR.API.WebSockets
                         {
                             Console.WriteLine($"Received from {tunnelId}: {message}");
                         }
-                        Console.WriteLine($"Received from {tunnelId}: {message}");
+                        //Console.WriteLine($"Received from {tunnelId}: {message}");
                     }
                 }
             }
