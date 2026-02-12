@@ -50,7 +50,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseWebSockets();
 
-app.UseMiddleware<TunnelProxyTestMiddleware>();
+//app.UseMiddleware<TunnelProxyTestMiddleware>();
 app.UseMiddleware<TunnelProxyMiddleware>();
 
 // WebSocket endpoint

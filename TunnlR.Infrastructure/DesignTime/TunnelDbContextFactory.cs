@@ -17,7 +17,7 @@ namespace TunnlR.Infrastructure.DesignTime
                 .Build();
 
             var connectionString = configuration.GetConnectionString("DefaultConnection")
-                ?? "Server=localhost;Database=TunnlRDb;User Id=tunnlr_user;Password=StrongPassword123!;Encrypt=True;TrustServerCertificate=True;";
+                ?? "Server=.\\SQLEXPRESS;Database=TunnlR;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;";
 
             var optionsBuilder = new DbContextOptionsBuilder<TunnelDbContext>();
             optionsBuilder.UseSqlServer(connectionString);

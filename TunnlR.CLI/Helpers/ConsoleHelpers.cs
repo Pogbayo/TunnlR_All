@@ -1,20 +1,78 @@
-﻿using TunnlR.Domain.Entities;
+﻿using TunnlR.Contract.DTOs.TunnelDto;
+using TunnlR.Domain.Entities;
 
 namespace TunnlRCLI.Helpers
 {
-    public class ConsoleHelpers
+    public static class ConsoleHelpers
     {
-        public static void PrintAnimatedHeader(string text, ConsoleColor color, int charDelay)
+        // Animated header
+        public static async Task PrintAnimatedHeaderAsync(string text, ConsoleColor color, int charDelay = 50)
         {
             Console.ForegroundColor = color;
             foreach (char c in text)
             {
                 Console.Write(c);
-                Thread.Sleep(charDelay);
+                await Task.Delay(charDelay);
             }
             Console.WriteLine("\n");
             Console.ResetColor();
         }
+
+        // Spinner animation for async tasks
+        public static async Task SpinnerAsync(string message, int durationMs = 2000)
+        {
+            var spinner = new[] { '|', '/', '-', '\\' };
+            var end = DateTime.Now.AddMilliseconds(durationMs);
+            int i = 0;
+
+            Console.Write(message + " ");
+            while (DateTime.Now < end)
+            {
+                Console.Write(spinner[i % spinner.Length]);
+                await Task.Delay(100);
+                Console.Write("\b");
+                i++;
+            }
+            Console.WriteLine();
+        }
+
+        // Async loading bar
+        public static async Task PrintLoadingBarAsync(string message, int steps = 30, int delayMs = 50)
+        {
+            Console.Write(message + " [");
+            for (int i = 0; i < steps; i++)
+            {
+                Console.Write("=");
+                await Task.Delay(delayMs);
+            }
+            Console.WriteLine("]");
+        }
+
+        // Tunnel info with async effects
+        public static async Task PrintTunnelInfoAsync(TunnelCreateResponse tunnel)
+        {
+            // Title
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine("\nTunnel started\n");
+            await Task.Delay(300);
+
+            // Public URL
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write("Public URL : ");
+            Console.ForegroundColor = ConsoleColor.Cyan; 
+            Console.WriteLine(tunnel.PublicUrl);
+            await Task.Delay(200);
+
+            // Dashboard URL
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write("Dashboard  : ");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(tunnel.DashboardUrl);
+            await Task.Delay(200);
+
+            Console.ResetColor();
+        }
+
 
         public static void PrintHelp()
         {
@@ -25,43 +83,11 @@ namespace TunnlRCLI.Helpers
             Console.ResetColor();
         }
 
-        public static void PrintTunnelInfo(Tunnel tunnel)
+        public static void PrintTunnelConnectionFailed(string errorMessage)
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("\n✅ Tunnel started!\n");
-            Thread.Sleep(500);
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Local Port : {tunnel.LocalPort}");
-            Thread.Sleep(300);
-
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"Public URL : {tunnel.PublicUrl}");
-            Thread.Sleep(300);
-
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.WriteLine($"Dashboard URL: {tunnel.DashboardUrl}\n");
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"\n❌ Tunnel failed: {errorMessage}");
             Console.ResetColor();
-        }
-
-        public static void AnimateDots(int count, int delay)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                Console.Write(".");
-                Thread.Sleep(delay);
-            }
-        }
-
-        public static void PrintLoadingBar(string message, int steps, int delay)
-        {
-            Console.Write(message + " [");
-            for (int i = 0; i < steps; i++)
-            {
-                Console.Write("=");
-                Thread.Sleep(delay);
-            }
-            Console.WriteLine("]");
         }
     }
 }

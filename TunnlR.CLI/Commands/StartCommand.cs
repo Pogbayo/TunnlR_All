@@ -1,7 +1,8 @@
 ﻿using TunnlR.CLI.Configuration;
-using TunnlRCLI.Helpers;
 using TunnlR.CLI.Services;
 using TunnlR.Contract.DTOs.TunnelDto;
+using TunnlR.Domain.Entities;
+using TunnlRCLI.Helpers;
 namespace TunnlR.CLI.Commands
 {
     public class StartCommand
@@ -26,36 +27,35 @@ namespace TunnlR.CLI.Commands
             }
 
             Console.WriteLine($"Starting tunnel on port {port}...");
-            ConsoleHelpers.PrintLoadingBar("Connecting", 20, 50);
+            await ConsoleHelpers.PrintLoadingBarAsync("Connecting", 20, 50);
 
             var tunnelEstablishedTcs = new TaskCompletionSource<bool>();
 
-            _cliTunnelService.TunnelEstablished += (s, tunnelInfo) =>
+            //Subscribing and unsubscribing events from the server to avoid work load
+            EventHandler<TunnelCreateResponse>? onEstablished = null;
+            EventHandler<string>? onFailed = null;
+
+            onEstablished = async (s, tunnelInfo) =>
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("\n✅ Tunnel started!");
-                Console.WriteLine($"Public URL: {tunnelInfo.PublicUrl}");
-                Console.WriteLine($"Dashboard: {tunnelInfo.DashboardUrl}");
-                Console.ResetColor();
+                await ConsoleHelpers.PrintTunnelInfoAsync(tunnelInfo);
                 tunnelEstablishedTcs.TrySetResult(true);
             };
 
-            _cliTunnelService.TunnelFailed += (s, errorMessage) =>
+            onFailed = (s, errorMessage) =>
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\n❌ Tunnel failed: {errorMessage}");
-                Console.ResetColor();
-                tunnelEstablishedTcs.TrySetResult(false); 
+                ConsoleHelpers.PrintTunnelConnectionFailed(errorMessage);
+                tunnelEstablishedTcs.TrySetResult(false);
             };
 
-            _cliTunnelService.MessageReceived += (s, message) =>
-            {
-                Console.WriteLine($"📨 Message: {message}");
-            };
+            _cliTunnelService.TunnelEstablished += onEstablished;
+            _cliTunnelService.TunnelFailed += onFailed;
 
             await _cliTunnelService.ConnectAsync(token, port, protocol);
 
             var success = await tunnelEstablishedTcs.Task;
+
+            _cliTunnelService.TunnelEstablished -= onEstablished;
+            _cliTunnelService.TunnelFailed -= onFailed;
 
             if (success)
             {

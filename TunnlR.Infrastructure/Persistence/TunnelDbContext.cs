@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using TunnlR.Domain;
 using TunnlR.Domain.Entities;
 
@@ -17,8 +18,17 @@ namespace TunnlR.RelayServer.Persistence
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-            builder.Entity<BaseEntity>()
-                 .HasQueryFilter(e => !e.IsDeleted);
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
+                if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+                {
+                    var parameter = Expression.Parameter(entityType.ClrType, "e");
+                    var property = Expression.Property(parameter, nameof(BaseEntity.IsDeleted));
+                    var filter = Expression.Lambda(Expression.Not(property), parameter);
+
+                    builder.Entity(entityType.ClrType).HasQueryFilter(filter);
+                }
+            }
 
             builder.ApplyConfigurationsFromAssembly(typeof(TunnelDbContext).Assembly);
         }

@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using Microsoft.IdentityModel.Tokens;
 using TunnlR.Application.Interfaces.IService;
 using TunnlR.Contract.DTOs.Auth;
 using TunnlR.Contract.DTOs.TunnelDto;
@@ -14,23 +15,44 @@ namespace TunnlR.API.WebSockets
     {
         private readonly IWebSocketConnectionManager _connectionManager;
         private readonly ITunnelService _tunnelService;
+        private readonly IConfiguration _configuration;
         private static readonly ConcurrentDictionary<Guid, TaskCompletionSource<string>> _pendingRequests = new();
 
         public TunnelWebSocketHandler(
+             IConfiguration configuration,
             IWebSocketConnectionManager connectionManager,
             ITunnelService tunnelService)
         {
             _connectionManager = connectionManager;
             _tunnelService = tunnelService;
+            _configuration = configuration;
         }
 
         public async Task HandleConnectionAsync(HttpContext context,WebSocket webSocket)
         {
             var tunnelId = Guid.Empty;
+            var userId = Guid.Empty;
             try
             {
                 var token = context.Request.Query["token"].ToString();
-                var userId = ExtractUserIdFromToken(token); 
+
+                try
+                {
+                     userId = ExtractUserIdFromToken(token, _configuration);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    var errorMsg = new { Type = "ERROR", Reason = ex.Message };
+                    var json = JsonSerializer.Serialize(errorMsg);
+
+                    if (webSocket.State == WebSocketState.Open)
+                    {
+                        var bytes = Encoding.UTF8.GetBytes(json);
+                        await webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
+                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Token expired", CancellationToken.None);
+                    }
+                    return;
+                }
 
                 var port = int.Parse(context.Request.Query["port"].ToString());
                 var protocol = context.Request.Query["protocol"].ToString();
@@ -41,10 +63,21 @@ namespace TunnlR.API.WebSockets
                     Protocol = protocol
                 });
 
+                if (tunnelResponse == null || tunnelResponse.TunnelId == Guid.Empty)
+                {
+                    Console.WriteLine("ERROR: CreateTunnelAsync returned null or empty TunnelId");
+                    await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "Tunnel creation failed", CancellationToken.None);
+                    return;
+                }
+
                 tunnelId = tunnelResponse.TunnelId;
+
                 Console.WriteLine("Relay: WebSocket accepted from CLI. Token: " + token);
                 _connectionManager.AddConnection(tunnelId, webSocket);
                 Console.WriteLine($"Registered WebSocket for TunnelId {tunnelId}");
+
+                var test = _connectionManager.GetConnection(tunnelId);
+                Console.WriteLine($"IMMEDIATE RETRIEVAL: {(test == null ? "NULL" : "FOUND")}");
 
                 var message = JsonSerializer.Serialize(tunnelResponse);
                 await _connectionManager.SendMessageAsync(tunnelId, message);
@@ -129,16 +162,41 @@ namespace TunnlR.API.WebSockets
             return await responseTask;
         }
 
-        private Guid ExtractUserIdFromToken(string token)
+        private Guid ExtractUserIdFromToken(string token, IConfiguration configuration)
         {
             var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
-            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(userIdClaim))
-                throw new InvalidOperationException("JWT token does not contain 'NameIdentifier' claim.");
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true, 
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = configuration["Jwt:Issuer"],
+                ValidAudience = configuration["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)),
+                ClockSkew = TimeSpan.Zero 
+            };
 
-            return Guid.Parse(userIdClaim);
+            try
+            {
+                var principal = handler.ValidateToken(token, validationParameters, out _);
+                var userIdClaim = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim))
+                    throw new InvalidOperationException("JWT token does not contain 'NameIdentifier' claim.");
+
+                return Guid.Parse(userIdClaim);
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                throw new UnauthorizedAccessException("Token has expired. Please login again.");
+            }
+            catch (SecurityTokenException)
+            {
+                throw new UnauthorizedAccessException("Invalid token.");
+            }
         }
     }
 }

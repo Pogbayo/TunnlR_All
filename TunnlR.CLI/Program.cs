@@ -34,7 +34,7 @@ builder.Logging.AddFilter("TunnlR.CLI", LogLevel.Information);
 
 var host = builder.Build();
 
-ConsoleHelpers.PrintAnimatedHeader("🚀 TunnlR CLI", ConsoleColor.Cyan, 50);
+await ConsoleHelpers.PrintAnimatedHeaderAsync("🚀 TunnlR CLI", ConsoleColor.Cyan, 50);
 ConsoleHelpers.PrintHelp();
 
 while (true)
@@ -58,6 +58,8 @@ while (true)
                 Console.Write("Password: ");
                 var password = ReadPassword();
                 await loginCmd.ExecuteAsync(email!, password);
+                Console.Clear();
+                ConsoleHelpers.PrintHelp();
                 break;
 
             case "register":

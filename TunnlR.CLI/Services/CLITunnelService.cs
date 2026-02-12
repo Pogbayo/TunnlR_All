@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net.WebSockets;
+﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
@@ -18,7 +17,9 @@ namespace TunnlR.CLI.Services
         public event EventHandler<TunnelCreateResponse>? TunnelEstablished;
         public event EventHandler? TunnelClosed;
         public event EventHandler? TunnelDeactivated;
-        public event EventHandler<string>? TunnelFailed; 
+        public event EventHandler<string>? TunnelFailed;
+        private TaskCompletionSource<bool>? _connectTcs;
+
 
         public CLITunnelService(IConfiguration configuration)
         {
@@ -32,124 +33,164 @@ namespace TunnlR.CLI.Services
             _websocket = new ClientWebSocket();
 
             var uri = new Uri($"{wsUrl}/tunnel?token={token}&port={localPort}&protocol={protocol}");
+
+            _connectTcs = new TaskCompletionSource<bool>();
+
             try
             {
                 await _websocket.ConnectAsync(uri, CancellationToken.None);
-                Console.WriteLine("WebSocket connected to relay!");
+
+                _ = Task.Run(ListenAsync);
+
+                var success = await _connectTcs.Task;
+
+                if (!success)
+                {
+                    Console.WriteLine("Tunnel connection failed.");
+                    return;
+                }
             }
             catch (Exception ex)
             {
                 TunnelFailed?.Invoke(this, $"Failed to connect to relay server: {ex.Message}");
-                return;
+                _connectTcs.TrySetResult(false);
             }
-
-            _ = Task.Run(ListenAsync);
         }
 
         private async Task ListenAsync()
         {
             var buffer = new byte[1024 * 4];
 
-            while (_websocket?.State == WebSocketState.Open)
+            try
             {
-                var result = await _websocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-
-                // If the server returns an error message
-                if (message.Contains("error", StringComparison.OrdinalIgnoreCase) ||
-                    message.Contains("Exception") ||
-                    message.Contains("failed", StringComparison.OrdinalIgnoreCase))
+                while (_websocket?.State == WebSocketState.Open)
                 {
-                    TunnelFailed?.Invoke(this, message);
-                    continue;
-                }
+                    var result = await _websocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-                await HandleMessageAsync(message);
+                    // Try parse control message
+                    if (TryParseControlMessage(message, out string type, out string? reason))
+                    {
+                        switch (type)
+                        {
+                            case "ERROR":
+                                TunnelFailed?.Invoke(this, reason ?? "Unknown server error");
+                                _connectTcs?.TrySetResult(false);
+                                return; // stop ListenAsync
+                            case "TUNNEL_CLOSED":
+                                TunnelDeactivated?.Invoke(this, EventArgs.Empty);
+                                _connectTcs?.TrySetResult(false);
+                                return;
+                        }
+                    }
+
+                    await HandleMessageAsync(message);
+                }
+            }
+            catch (WebSocketException wex)
+            {
+                // Only fire failure if we didn't already get an ERROR message
+                TunnelFailed?.Invoke(this, $"WebSocket error: {wex.Message}");
+                _connectTcs?.TrySetResult(false);
+            }
+            catch (Exception ex)
+            {
+                TunnelFailed?.Invoke(this, $"Unexpected error: {ex.Message}");
+                _connectTcs?.TrySetResult(false);
             }
         }
 
         private async Task HandleMessageAsync(string message)
         {
-            try
-            {
-                Console.WriteLine("CLI: Received raw message: " + message.Substring(0, Math.Min(150, message.Length)) + "...");
-                var tunnelInfo = JsonSerializer.Deserialize<TunnelCreateResponse>(message);
+            using var doc = JsonDocument.Parse(message);
 
-                if (tunnelInfo != null && !string.IsNullOrEmpty(tunnelInfo.PublicUrl))
-                {
-                    Console.WriteLine("CLI: Received tunnel establishment response");
-                    TunnelEstablished?.Invoke(this, tunnelInfo);
-                    return;                   
-                }
-               Console.WriteLine("CLI: This is an HTTP request → forwarding to localhost");
-                await ForwardToLocalhost(message);
-                MessageReceived?.Invoke(this, message);
-            }
-            catch(Exception ex)
+            if (doc.RootElement.TryGetProperty("Type", out var type))
             {
-                Console.WriteLine("CLI: Error in HandleMessageAsync: " + ex.Message);
-                try { await ForwardToLocalhost(message); } catch { }
+                switch (type.GetString())
+                {
+                    case "TUNNEL_CLOSED":
+                        TunnelDeactivated?.Invoke(this, EventArgs.Empty);
+                        return;
+
+                    case "ERROR":
+                        TunnelFailed?.Invoke(this, message);
+                        _connectTcs?.TrySetResult(false);
+                        return;
+                }
             }
+
+            // HTTP or tunnel establish message
+            //Console.WriteLine("CLI: Received raw message: " + message.Substring(0, Math.Min(150, message.Length)) + "...");
+
+            var tunnelInfo = JsonSerializer.Deserialize<TunnelCreateResponse>(message);
+            if (tunnelInfo != null && !string.IsNullOrEmpty(tunnelInfo.PublicUrl))
+            {
+                TunnelEstablished?.Invoke(this, tunnelInfo);
+                _connectTcs?.TrySetResult(true);
+                return;
+            }
+
+            MessageReceived?.Invoke(this, message);
+            await ForwardToLocalhost(message);
         }
 
         private async Task ForwardToLocalhost(string httpRequestJson)
         {
-            Console.WriteLine("CLI: Received request JSON: " + httpRequestJson);
-
             var request = JsonSerializer.Deserialize<HttpRequestData>(httpRequestJson);
             if (request == null)
             {
-                Console.WriteLine("CLI: Failed to deserialize request");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("❌ Failed to deserialize request");
+                Console.ResetColor();
                 return;
-            }
-
-            // Strip test prefix for local testing
-            var localPath = request.Path;
-            if (localPath.StartsWith("/api/tunnel/"))
-            {
-                var idEndIndex = localPath.IndexOf('/', "/api/tunnel/".Length + 36);
-                if (idEndIndex > 0)
-                {
-                    localPath = localPath.Substring(idEndIndex);
-                }
-                else
-                {
-                    localPath = "/";
-                }
-                Console.WriteLine("CLI: Stripped test path → forwarding to: " + localPath);
             }
 
             var baseUrl = _configuration["LocalServer:BaseUrl"] ?? "http://localhost";
             var fullBase = $"{baseUrl}:{_localPort}";
-            Console.WriteLine($"CLI: Forwarding {request.Method} to {fullBase}{localPath}");
 
             using var httpClient = new HttpClient { BaseAddress = new Uri(fullBase) };
 
             var httpRequest = new HttpRequestMessage
             {
                 Method = new HttpMethod(request.Method),
-                RequestUri = new Uri(localPath, UriKind.Relative)
+                RequestUri = new Uri(request.Path, UriKind.Relative)
             };
 
-            // Copy headers
             foreach (var header in request.Headers)
-            {
                 httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
-            }
 
-            // Copy body if present
             if (!string.IsNullOrEmpty(request.Body))
-            {
                 httpRequest.Content = new StringContent(request.Body, Encoding.UTF8, "application/json");
-            }
 
             try
             {
                 var response = await httpClient.SendAsync(httpRequest);
-                Console.WriteLine($"CLI: Local response status: {response.StatusCode}");
-
                 var body = await response.Content.ReadAsStringAsync();
-                Console.WriteLine("CLI: Local response body: " + body);
+
+                // Determine emoji/color based on status code
+                string emoji;
+                ConsoleColor color;
+                if ((int)response.StatusCode >= 200 && (int)response.StatusCode < 300)
+                {
+                    //emoji = "✅"; color = ConsoleColor.Green;
+                    emoji = "🌐"; color = ConsoleColor.Gray;
+                }
+                else if ((int)response.StatusCode == 401)
+                {
+                    emoji = "🔒"; color = ConsoleColor.Gray;
+                }
+                else if ((int)response.StatusCode == 404)
+                {
+                    emoji = "❌"; color = ConsoleColor.Gray;
+                }
+                else
+                {
+                    emoji = "💥"; color = ConsoleColor.Gray;
+                }
+
+                Console.ForegroundColor = color;
+                Console.WriteLine($"{emoji} {request.Method} {request.Path} → {response.StatusCode}");
+                Console.ResetColor();
 
                 var responseData = new HttpResponseData
                 {
@@ -161,13 +202,15 @@ namespace TunnlR.CLI.Services
 
                 var responseJson = JsonSerializer.Serialize(responseData);
                 await SendAsync(responseJson);
-                Console.WriteLine("CLI: Successfully sent response back to relay");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("CLI: Forward failed: " + ex.Message);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"💥 {request.Method} {request.Path} → Forward failed: {ex.Message}");
+                Console.ResetColor();
             }
         }
+
         public async Task SendAsync(string message)
         {
             if (_websocket?.State == WebSocketState.Open)
@@ -199,6 +242,31 @@ namespace TunnlR.CLI.Services
             var serverUrl = _configuration["RelayServer:Url"];
             var response = await context.DeleteAsync($"{serverUrl}/api/tunnel/deactivate/{TunnelId}");
             response.EnsureSuccessStatusCode();
+            TunnelDeactivated?.Invoke(this, EventArgs.Empty);
         }
+
+        private bool TryParseControlMessage(string message, out string type, out string? reason)
+        {
+            type = "";
+            reason = null;
+
+            try
+            {
+                using var doc = JsonDocument.Parse(message);
+                if (doc.RootElement.TryGetProperty("Type", out var typeProp))
+                {
+                    type = typeProp.GetString() ?? "";
+                    doc.RootElement.TryGetProperty("Reason", out var reasonProp);
+                    reason = reasonProp.GetString();
+                    return true;
+                }
+            }
+            catch { }
+
+            return false;
+        }
+
     }
 }
+
+

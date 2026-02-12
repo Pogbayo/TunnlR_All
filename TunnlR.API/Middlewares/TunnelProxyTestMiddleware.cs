@@ -38,8 +38,11 @@ namespace TunnlR.API.Middlewares
                 return;
             }
             Console.WriteLine("Entered local test block");
+
             var pathParts = path.Split('/');
-            if (pathParts.Length < 2 || !Guid.TryParse(pathParts[2], out var tunnelId))
+            var tunnelIdSegment = pathParts[^1];
+
+            if (pathParts.Length < 2 || !Guid.TryParse(tunnelIdSegment, out var tunnelId))
             {
                 context.Response.StatusCode = 400;
                 await context.Response.WriteAsync("Invalid tunnel ID in test path");

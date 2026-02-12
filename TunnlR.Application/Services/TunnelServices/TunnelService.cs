@@ -1,34 +1,45 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using TunnlR.Application.Interfaces.IService;
-using TunnlR.RelayServer.Persistence;
-using TunnlR.Domain.Entities;
-using TunnlR.Contract.DTOs.Enums;
 using TunnlR.Application.Mappings;
+using TunnlR.Application.Services.WebSocketConnection;
+using TunnlR.Contract.DTOs.Enums;
 using TunnlR.Contract.DTOs.TunnelDto;
+using TunnlR.Domain.Entities;
+using TunnlR.RelayServer.Persistence;
 
 namespace TunnlR.Application.Services.TunnelServices
 {
     public class TunnelService : ITunnelService
     {
         private readonly TunnelDbContext _context;
-
-        public TunnelService(TunnelDbContext context)
+        private readonly IWebSocketConnectionManager _wsManager;
+        public TunnelService(TunnelDbContext context, IWebSocketConnectionManager wsManager)
         {
             _context = context;
+            _wsManager = wsManager;
         }
 
         public async Task<TunnelCreateResponse> CreateTunnelAsync(
-            Guid userId,
-            TunnelCreateRequest request)
+     Guid userId,
+     TunnelCreateRequest request)
         {
+            Console.WriteLine($"CreateTunnelAsync called for userId: {userId}, LocalPort: {request.LocalPort}, Protocol: {request.Protocol}");
+
             var existingTunnel = await _context.Tunnels
                 .FirstOrDefaultAsync(t => t.UserId == userId && t.Status == Domain.DTOs.Enums.TunnelStatus.Active);
 
+            Console.WriteLine(existingTunnel != null
+                ? $"Found existing ACTIVE tunnel: {existingTunnel.Id}"
+                : "No active tunnel found for user");
+
             if (existingTunnel != null)
             {
+                Console.WriteLine("Reusing existing tunnel and setting to Active");
                 existingTunnel.Status = Domain.DTOs.Enums.TunnelStatus.Active;
                 existingTunnel.LocalPort = request.LocalPort;
                 await _context.SaveChangesAsync();
+                Console.WriteLine($"Reused tunnel saved. Returning TunnelId: {existingTunnel.Id}");
 
                 return new TunnelCreateResponse
                 {
@@ -39,6 +50,7 @@ namespace TunnlR.Application.Services.TunnelServices
             }
             else
             {
+                Console.WriteLine("Creating new tunnel");
                 var subdomain = Guid.NewGuid().ToString("N").Substring(0, 8);
                 var publicUrl = $"https://{subdomain}.tunnlr.dev";
                 var dashboardUrl = $"https://dashboard.tunnlr.dev/{subdomain}";
@@ -52,11 +64,15 @@ namespace TunnlR.Application.Services.TunnelServices
                     LocalPort = request.LocalPort,
                     Protocol = request.Protocol,
                     CreatedAt = DateTime.UtcNow,
-                    Status = Domain.DTOs.Enums.TunnelStatus.Active 
+                    Status = Domain.DTOs.Enums.TunnelStatus.Active
                 };
+
+                Console.WriteLine($"New tunnel object created with Id: {tunnel.Id}, Subdomain: {subdomain}");
 
                 _context.Tunnels.Add(tunnel);
                 await _context.SaveChangesAsync();
+
+                Console.WriteLine($"New tunnel saved to DB. TunnelId: {tunnel.Id}");
 
                 return new TunnelCreateResponse
                 {
@@ -90,7 +106,13 @@ namespace TunnlR.Application.Services.TunnelServices
 
         public async Task<Tunnel?> GetTunnelById(Guid id)
         {
-            return await _context.Tunnels.FindAsync(id);
+            var tunnel =  await _context.Tunnels.FindAsync(id);
+            if (tunnel == null)
+            {
+                Console.WriteLine("Tunnel is null");
+                throw new Exception($"Tunnel with Id '{id}' not found");
+            }
+            return tunnel;
         }
 
         public async Task DeactivateTunnelAsync(Guid tunnelId)
@@ -101,6 +123,15 @@ namespace TunnlR.Application.Services.TunnelServices
                 tunnel.Status = (Domain.DTOs.Enums.TunnelStatus)TunnelStatus.Inactive;
                 await _context.SaveChangesAsync();
             }
+
+            var controlMessage = JsonSerializer.Serialize(new
+            {
+                Type = "TUNNEL_CLOSED",
+                Reason = "Tunnel deactivated by server"
+            });
+
+            await _wsManager.SendMessageAsync(tunnelId, controlMessage);
+
         }
 
         public async Task<GetTunnelResponse> GetTunnelBySubDomain(string subdomain)
@@ -117,6 +148,7 @@ namespace TunnlR.Application.Services.TunnelServices
             if (tunnel == null)
             {
                 Console.WriteLine("Tunnel is null");
+                throw new Exception($"Tunnel with subdomain '{subdomain}' not found");
             }
 
             return tunnel!;

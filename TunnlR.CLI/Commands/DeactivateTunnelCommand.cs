@@ -23,7 +23,7 @@ namespace TunnlR.CLI.Commands
 
         private void OnTunnelDeactivated(object? sender, EventArgs e)
         {
-            Console.ForegroundColor = ConsoleColor.Green;
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("✅ Tunnel deactivated!");
             Console.ResetColor();
         }
