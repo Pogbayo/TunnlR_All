@@ -29,6 +29,14 @@ namespace TunnlR.API.Middlewares
 
             // Step 1: Extract host and path
             var host = context.Request.Host.Host; // locahlost or subdomain
+                                                  
+            var subdomain = host.Split('.')[0]; // Extract subdomain (first part)
+
+            if (subdomain == "www" || subdomain == "api" || subdomain == "dashboard")
+            {
+                await _next(context); // skip tunnel middleware
+                return;
+            }
             var path = context.Request.Path;
 
             var requestId = Guid.NewGuid(); // Unique request ID
@@ -93,10 +101,12 @@ namespace TunnlR.API.Middlewares
             // Step 2: Subdomain tunnel request
             if (_urlHandler.IsSubdomainValid(host))
             {
-                //fetching the tunnel from the subdomain in the host
-                var tunnel = await _urlHandler.GetTunnelForSubdomainAsync(host);
-                localPath = _urlHandler.GetLocalPath(path);
-                //checks for null tunnels
+                // Fetch the tunnel using only the subdomain
+                var tunnel = await _urlHandler.GetTunnelForSubdomainAsync(subdomain);
+
+                // Production: everything after domain is the local path
+                localPath = context.Request.Path.Value;
+
                 if (tunnel == null)
                 {
                     //if null, write the statuscode to 404 which the message "" TUnnel not found
@@ -121,7 +131,7 @@ namespace TunnlR.API.Middlewares
                     await context.Response.WriteAsync("Tunnel offline");
                     return;
                 }
-                var requestData = await SerializeHttpRequest(context.Request,localPath, requestId);
+                var requestData = await SerializeHttpRequest(context.Request,localPath!, requestId);
 
                 //sends the data to the cli
                 await _wsManager.SendMessageAsync(tunnel.TunnelId, requestData);

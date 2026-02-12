@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using TunnlR.Application.Interfaces.IService;
 using TunnlR.Application.Mappings;
 using TunnlR.Application.Services.WebSocketConnection;
@@ -14,15 +15,17 @@ namespace TunnlR.Application.Services.TunnelServices
     {
         private readonly TunnelDbContext _context;
         private readonly IWebSocketConnectionManager _wsManager;
-        public TunnelService(TunnelDbContext context, IWebSocketConnectionManager wsManager)
+        private readonly IConfiguration _configuration;
+        public TunnelService(IConfiguration configuration,TunnelDbContext context, IWebSocketConnectionManager wsManager)
         {
+            _configuration = configuration;
             _context = context;
             _wsManager = wsManager;
         }
 
         public async Task<TunnelCreateResponse> CreateTunnelAsync(
-     Guid userId,
-     TunnelCreateRequest request)
+        Guid userId,
+        TunnelCreateRequest request)
         {
             Console.WriteLine($"CreateTunnelAsync called for userId: {userId}, LocalPort: {request.LocalPort}, Protocol: {request.Protocol}");
 
@@ -51,6 +54,7 @@ namespace TunnlR.Application.Services.TunnelServices
             else
             {
                 Console.WriteLine("Creating new tunnel");
+                var serverUrl = _configuration.GetValue<string>("ServerUrl:BaseUrl");
                 var subdomain = Guid.NewGuid().ToString("N").Substring(0, 8);
                 var publicUrl = $"https://{subdomain}.tunnlr.dev";
                 var dashboardUrl = $"https://dashboard.tunnlr.dev/{subdomain}";

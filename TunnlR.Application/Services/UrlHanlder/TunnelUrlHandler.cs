@@ -54,11 +54,11 @@ namespace TunnlR.Application.Services.UrlHanlder
             return await _tunnelService.GetTunnelById(tunnelId);
         }
 
-        public async Task<GetTunnelResponse?> GetTunnelForSubdomainAsync(string host)
+        public async Task<GetTunnelResponse?> GetTunnelForSubdomainAsync(string subdomain)
         {
-            // Get first part of host as subdomain
-            // Example: "demo.example.com" → subdomain = "demo"
-            var subdomain = host.Split('.')[0];
+            //// Get first part of host as subdomain
+            //// Example: "demo.example.com" → subdomain = "demo"
+            //var subdomain = host.Split('.')[0];
 
             // Fetch tunnel associated with that subdomain
             return await _tunnelService.GetTunnelBySubDomain(subdomain);
