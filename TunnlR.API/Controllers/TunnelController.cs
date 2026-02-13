@@ -16,6 +16,13 @@ namespace TunnlR.API.Controllers
             _tunnelService = tunnelService;
         }
 
+        [HttpGet("ping")]
+        [AllowAnonymous] // this makes it accessible without a JWT
+        public IActionResult Ping()
+        {
+            return Ok(new { message = "API is alive!" });
+        }
+
         //[HttpPost]
         //public async Task<IActionResult> CreateTunnel([FromBody] TunnelCreateRequest request)
         //{
