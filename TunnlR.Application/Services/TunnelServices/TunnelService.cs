@@ -54,9 +54,9 @@ namespace TunnlR.Application.Services.TunnelServices
             else
             {
                 Console.WriteLine("Creating new tunnel");
-                var serverUrl = _configuration.GetValue<string>("ServerUrl:BaseUrl");
+                var host = _configuration.GetValue<string>("ServerUrl:Host");
                 var subdomain = Guid.NewGuid().ToString("N").Substring(0, 8);
-                var publicUrl = $"https://{subdomain}.tunnlr.dev";
+                var publicUrl = $"https://{subdomain}.{host}";
                 var dashboardUrl = $"https://dashboard.tunnlr.dev/{subdomain}";
 
                 var tunnel = new Tunnel
