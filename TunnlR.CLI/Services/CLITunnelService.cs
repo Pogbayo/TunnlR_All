@@ -33,7 +33,7 @@ namespace TunnlR.CLI.Services
             _websocket = new ClientWebSocket();
 
             //This tells the proxy server...Okay, we strted as HTTP, but from NOW ON, this connection is WebSokcet. Don't close it
-            var uri = new Uri($"{wsUrl}/tunnel?token={token}&port={localPort}&protocol={protocol}");
+            var uri = new Uri($"{wsUrl}?token={token}&port={localPort}&protocol={protocol}");
 
             _connectTcs = new TaskCompletionSource<bool>();
 
