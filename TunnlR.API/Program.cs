@@ -48,6 +48,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+
+// HTTPS redirect
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseWebSockets();
 
 //app.UseMiddleware<TunnelProxyTestMiddleware>();
@@ -68,9 +75,7 @@ app.Map("/tunnel", async context =>
     }
 });
 
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
+;
 app.MapControllers();
 
 app.Run();

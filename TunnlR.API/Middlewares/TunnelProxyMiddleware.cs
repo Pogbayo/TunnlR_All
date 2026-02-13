@@ -20,15 +20,29 @@ namespace TunnlR.API.Middlewares
 
         public async Task InvokeAsync(HttpContext context)
         {
+            // Step 1: Extract host and path
+            var host = context.Request.Host.Host; // locahlost or subdomain
+            var path = context.Request.Path;
+
+
+            if (path.StartsWithSegments("/api") ||
+                path.StartsWithSegments("/swagger") ||
+                host.StartsWith("localhost") ||
+                host.StartsWith("127.0.0.1") ||
+                host.StartsWith("www") ||
+                host.StartsWith("api") ||
+                host.StartsWith("dashboard"))
+            {
+                await _next(context); 
+                return;
+            }
+
             using var scope = _serviceProvider.CreateScope();
             var serviceProvider = scope.ServiceProvider;
 
             // Resolve scoped services from the scope
             var _wsManager = serviceProvider.GetRequiredService<IWebSocketConnectionManager>();
             var _urlHandler = serviceProvider.GetRequiredService<ITunnelUrlHandler>();
-
-            // Step 1: Extract host and path
-            var host = context.Request.Host.Host; // locahlost or subdomain
                                                   
             var subdomain = host.Split('.')[0]; // Extract subdomain (first part)
 
@@ -37,7 +51,6 @@ namespace TunnlR.API.Middlewares
                 await _next(context); // skip tunnel middleware
                 return;
             }
-            var path = context.Request.Path;
 
             var requestId = Guid.NewGuid(); // Unique request ID
             var localPath = string.Empty;
