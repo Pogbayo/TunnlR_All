@@ -42,7 +42,7 @@ namespace TunnlR.API.Middlewares
                                                   
             var subdomain = host.Split('.')[0]; // Extract subdomain (first part)
 
-            if (subdomain == "www" || subdomain == "api" || subdomain == "dashboard")
+            if (subdomain == "www" || subdomain == "api" || subdomain == "dashboard" || host == "tech-expert-beta.com.ng")
             {
                 await _next(context); // skip tunnel middleware
                 return;
