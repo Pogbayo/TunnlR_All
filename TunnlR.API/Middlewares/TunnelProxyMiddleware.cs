@@ -20,20 +20,19 @@ namespace TunnlR.API.Middlewares
 
         public async Task InvokeAsync(HttpContext context)
         {
-            // Step 1: Extract host and path
-            var host = context.Request.Host.Host; // locahlost or subdomain
-            var path = context.Request.Path;
-
-
-            if (path.StartsWithSegments("/api") ||
-                path.StartsWithSegments("/swagger") ||
-                host.StartsWith("localhost") ||
-                host.StartsWith("127.0.0.1"))
+            if (context.Request.Path.StartsWithSegments("/api") ||
+                context.Request.Path.StartsWithSegments("/swagger") ||
+                context.Request.Host.Host.StartsWith("localhost") ||
+                context.Request.Host.Host.StartsWith("127.0.0.1"))
             {
-                await _next(context); 
+                await _next(context);
                 return;
             }
 
+            // Step 1: Extract host and path
+            var host = context.Request.Host.Host; // locahlost or subdomain
+            var path = context.Request.Path;
+           
             using var scope = _serviceProvider.CreateScope();
             var serviceProvider = scope.ServiceProvider;
 
