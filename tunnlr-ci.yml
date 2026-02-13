@@ -43,5 +43,5 @@ jobs:
              # echo "Running migrations..."
              # dotnet ef database update --project TunnlR.Infrastructure --startup-project TunnlR.API
              echo "Restarting service..."
-             sudo systemctl restart tunnlr
+             sudo systemctl restart tunnlr-api.service  
              echo "Deployment complete!"

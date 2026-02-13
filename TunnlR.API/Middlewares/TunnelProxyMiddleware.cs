@@ -28,10 +28,7 @@ namespace TunnlR.API.Middlewares
             if (path.StartsWithSegments("/api") ||
                 path.StartsWithSegments("/swagger") ||
                 host.StartsWith("localhost") ||
-                host.StartsWith("127.0.0.1") ||
-                host.StartsWith("www") ||
-                host.StartsWith("api") ||
-                host.StartsWith("dashboard"))
+                host.StartsWith("127.0.0.1"))
             {
                 await _next(context); 
                 return;
