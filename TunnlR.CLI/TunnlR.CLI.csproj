@@ -19,6 +19,10 @@
 	  <ToolCommandName>tunnlr</ToolCommandName>
     <Nullable>enable</Nullable>
     <UserSecretsId>7681358e-8bfe-43b8-bd36-d7ba486c2682</UserSecretsId>
+	  <Version>1.0.0</Version>
+	  <Authors>Adebayo</Authors>
+	  <Description>TunnlR CLI - Expose your localhost to the internet</Description>
+	  <PackageProjectUrl>https://github.com/Pogbayo/TunnlR_All</PackageProjectUrl>
   </PropertyGroup>
 
 </Project>

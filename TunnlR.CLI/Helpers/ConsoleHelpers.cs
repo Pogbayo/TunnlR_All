@@ -18,75 +18,119 @@ namespace TunnlRCLI.Helpers
             Console.ResetColor();
         }
 
-        // Spinner animation for async tasks
-        public static async Task SpinnerAsync(string message, int durationMs = 2000)
+        // Modern dots animation
+        public static async Task PrintLoadingBarAsync(string message, int steps = 20, int delayMs = 50)
         {
-            var spinner = new[] { '|', '/', '-', '\\' };
-            var end = DateTime.Now.AddMilliseconds(durationMs);
-            int i = 0;
+            var frames = new[] { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" };
+            var colors = new[] { ConsoleColor.Cyan, ConsoleColor.Blue, ConsoleColor.DarkCyan };
 
             Console.Write(message + " ");
-            while (DateTime.Now < end)
-            {
-                Console.Write(spinner[i % spinner.Length]);
-                await Task.Delay(100);
-                Console.Write("\b");
-                i++;
-            }
-            Console.WriteLine();
-        }
+            var startPos = Console.CursorLeft;
 
-        // Async loading bar
-        public static async Task PrintLoadingBarAsync(string message, int steps = 30, int delayMs = 50)
-        {
-            Console.Write(message + " [");
             for (int i = 0; i < steps; i++)
             {
-                Console.Write("=");
+                foreach (var frame in frames)
+                {
+                    Console.SetCursorPosition(startPos, Console.CursorTop);
+                    Console.ForegroundColor = colors[i % colors.Length];
+                    Console.Write(frame);
+                    await Task.Delay(delayMs);
+                }
+            }
+
+            Console.SetCursorPosition(startPos, Console.CursorTop);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("✓");
+            Console.ResetColor();
+        }
+
+        // Alternative: Progress bar style
+        public static async Task PrintProgressBarAsync(string message, int steps = 30, int delayMs = 50)
+        {
+            Console.Write(message + " ");
+            Console.Write("[");
+            var barStart = Console.CursorLeft;
+            Console.Write(new string(' ', steps));
+            Console.Write("]");
+
+            for (int i = 0; i < steps; i++)
+            {
+                Console.SetCursorPosition(barStart + i, Console.CursorTop);
+                Console.ForegroundColor = i < steps / 3 ? ConsoleColor.Red :
+                                         i < steps * 2 / 3 ? ConsoleColor.Yellow :
+                                         ConsoleColor.Green;
+                Console.Write("█");
                 await Task.Delay(delayMs);
             }
-            Console.WriteLine("]");
+
+            Console.SetCursorPosition(0, Console.CursorTop + 1);
+            Console.ResetColor();
         }
 
         // Tunnel info with async effects
         public static async Task PrintTunnelInfoAsync(TunnelCreateResponse tunnel)
         {
-            // Title
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine("\nTunnel started\n");
-            await Task.Delay(300);
+            Console.WriteLine();
 
-            // Public URL
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write("Public URL : ");
-            Console.ForegroundColor = ConsoleColor.Cyan; 
-            Console.WriteLine(tunnel.PublicUrl);
+            // Success checkmark animation
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("✓ ");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("Tunnel started");
             await Task.Delay(200);
+
+            Console.WriteLine();
+
+            // Public URL with box
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine("┌─────────────────────────────────────────────────");
+            Console.Write("│ ");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write("Public URL  ");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine(tunnel.PublicUrl);
+            await Task.Delay(150);
 
             // Dashboard URL
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write("Dashboard  : ");
-            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("│ ");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write("Dashboard   ");
+            Console.ForegroundColor = ConsoleColor.Magenta;
             Console.WriteLine(tunnel.DashboardUrl);
-            await Task.Delay(200);
+            await Task.Delay(150);
+
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine("└─────────────────────────────────────────────────");
 
             Console.ResetColor();
         }
 
-
         public static void PrintHelp()
         {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("\n━━━ Commands ━━━");
+            Console.ResetColor();
+
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("\nCommands:");
-            Console.WriteLine("start --port 5000 --protocol http : Start a new tunnel");
-            Console.WriteLine("exit : Exit the CLI\n");
+            Console.Write("  start");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine(" --port 5000 --protocol http");
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine("    Start a new tunnel\n");
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("  exit");
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine("\n    Exit the CLI\n");
+
             Console.ResetColor();
         }
 
         public static void PrintTunnelConnectionFailed(string errorMessage)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"\n❌ Tunnel failed: {errorMessage}");
+            Console.WriteLine($"\n✗ Tunnel failed: {errorMessage}");
             Console.ResetColor();
         }
     }
