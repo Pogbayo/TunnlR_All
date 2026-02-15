@@ -38,7 +38,7 @@ case "$OS" in
 esac
 
 # Build the download URL
-DOWNLOAD_URL="https://github.com/Pogbayo/tunnlr/releases/latest/download/$BINARY"
+DOWNLOAD_URL="https://github.com/Pogbayo/TunnlR_All/releases/latest/download/$BINARY"
 
 # Installation directory (standard location for user-installed binaries)
 # /usr/local/bin is in PATH by default on macOS/Linux
