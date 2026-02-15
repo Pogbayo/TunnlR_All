@@ -1,14 +1,27 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.log
+
+# User secrets
+**/appsettings.Development.json
+**/secrets.json
+
 # Terraform
 *.tfstate
 *.tfstate.*
 .terraform/
+*.tfvars
 
-# Sensitive files
-*.tfvars   # contains secrets like SSH path, IPs
-*.tf
-
-# OS / IDE
-*.log
+# IDE
 .vs/
-bin/
-obj/
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+**/publish/
