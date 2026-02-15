@@ -11,7 +11,7 @@ $arch = if ([Environment]::Is64BitOperatingSystem) { "x64" } else { "x86" }
 
 # Build the download URL for the correct Windows binary from GitHub releases
 # "latest" automatically gets the most recent release
-$downloadUrl = "https://github.com/Pogbayo/tunnlr/releases/latest/download/tunnlr-windows-$arch.exe"
+$downloadUrl = "https://github.com/Pogbayo/TunnlR_All/releases/latest/download/tunnlr-windows-$arch.exe"
 
 # Set installation location to user's AppData folder
 # %LOCALAPPDATA% is typically C:\Users\YourName\AppData\Local
