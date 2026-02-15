@@ -175,30 +175,31 @@ namespace TunnlR.CLI.Services
                 var response = await httpClient.SendAsync(httpRequest);
                 var body = await response.Content.ReadAsStringAsync();
 
-                // Determine emoji/color based on status code
-                string emoji;
-                ConsoleColor color;
-                if ((int)response.StatusCode >= 200 && (int)response.StatusCode < 300)
+                if (!request.Path.EndsWith("/favicon.ico", StringComparison.OrdinalIgnoreCase))
                 {
-                    //emoji = "✅"; color = ConsoleColor.Green;
-                    emoji = "🌐"; color = ConsoleColor.Gray;
-                }
-                else if ((int)response.StatusCode == 401)
-                {
-                    emoji = "🔒"; color = ConsoleColor.Gray;
-                }
-                else if ((int)response.StatusCode == 404)
-                {
-                    emoji = "❌"; color = ConsoleColor.Gray;
-                }
-                else
-                {
-                    emoji = "💥"; color = ConsoleColor.Gray;
-                }
+                    string emoji;
+                    ConsoleColor color;
+                    if ((int)response.StatusCode >= 200 && (int)response.StatusCode < 300)
+                    {
+                        emoji = "🌐"; color = ConsoleColor.Gray;
+                    }
+                    else if ((int)response.StatusCode == 401)
+                    {
+                        emoji = "🔒"; color = ConsoleColor.Gray;
+                    }
+                    else if ((int)response.StatusCode == 404)
+                    {
+                        emoji = "❌"; color = ConsoleColor.Gray;
+                    }
+                    else
+                    {
+                        emoji = "💥"; color = ConsoleColor.Gray;
+                    }
 
-                Console.ForegroundColor = color;
-                Console.WriteLine($"{emoji} {request.Method} {request.Path} → {response.StatusCode}");
-                Console.ResetColor();
+                    Console.ForegroundColor = color;
+                    Console.WriteLine($"{emoji} {request.Method} {request.Path} → {response.StatusCode}");
+                    Console.ResetColor();
+                }
 
                 var responseData = new HttpResponseData
                 {

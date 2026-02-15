@@ -38,10 +38,9 @@ jobs:
           script: |
              cd /var/www/TunnlR_All
              git pull origin master
-             dotnet restore
-             dotnet build -c Release
-             # echo "Running migrations..."
-             # dotnet ef database update --project TunnlR.Infrastructure --startup-project TunnlR.API
+             cd TunnlR.API
+             dotnet clean
+             dotnet publish -c Release -o publish
              echo "Restarting service..."
              sudo systemctl restart tunnlr-api.service  
              echo "Deployment complete!"
