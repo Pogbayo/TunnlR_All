@@ -1,4 +1,5 @@
 ﻿using System.Net.WebSockets;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
@@ -158,7 +159,13 @@ namespace TunnlR.CLI.Services
             };
 
             foreach (var header in request.Headers)
+            {
+                // Skip Host header -  want to use localhost, not the public domain
+                if (header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
                 httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
 
             if (!string.IsNullOrEmpty(request.Body))
                 httpRequest.Content = new StringContent(request.Body, Encoding.UTF8, "application/json");

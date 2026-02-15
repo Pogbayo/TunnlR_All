@@ -20,13 +20,17 @@ namespace TunnlR.API.Middlewares
 
         public async Task InvokeAsync(HttpContext context)
         {
-            if (context.Request.Path.StartsWithSegments("/api") ||
-                context.Request.Path.StartsWithSegments("/swagger") ||
-                context.Request.Host.Host.StartsWith("localhost") ||
-                context.Request.Host.Host.StartsWith("127.0.0.1"))
+            if (context.Request.Host.Host.StartsWith("localhost") ||
+                context.Request.Host.Host.StartsWith("127.0.0.1") ||
+                context.Request.Host.Host == "tech-expert-beta.com.ng")
             {
-                await _next(context);
-                return;
+                // Only skip if it's /api or /swagger on the main domain
+                if (context.Request.Path.StartsWithSegments("/api") ||
+                    context.Request.Path.StartsWithSegments("/swagger"))
+                {
+                    await _next(context);
+                    return;
+                }
             }
 
             // Step 1: Extract host and path
