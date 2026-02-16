@@ -47,18 +47,37 @@ INSTALL_DIR="/usr/local/bin"
 # Full path where tunnlr will be installed
 INSTALL_PATH="$INSTALL_DIR/tunnlr"
 
-# Download the binary
+# Download the binary with error handling
 echo "Downloading $BINARY..."
-curl -L "$DOWNLOAD_URL" -o tunnlr  # -L follows redirects, -o saves to file
+if curl -L "$DOWNLOAD_URL" -o tunnlr --fail --silent --show-error; then
+    echo "✓ Download complete!"
+else
+    echo ""
+    echo "✗ Installation failed!"
+    echo "Error: Unable to download from GitHub"
+    echo ""
+    echo "Please download manually from:"
+    echo "https://github.com/Pogbayo/TunnlR_All/releases/latest"
+    echo ""
+    echo "After downloading:"
+    echo "1. chmod +x $BINARY"
+    echo "2. sudo mv $BINARY /usr/local/bin/tunnlr"
+    exit 1
+fi
 
 # Make the binary executable (required on Unix systems)
 echo "Installing to $INSTALL_DIR..."
-chmod +x tunnlr  # chmod +x adds execute permission
+chmod +x tunnlr
 
 # Move to system directory (requires sudo/admin password)
-sudo mv tunnlr "$INSTALL_PATH"
-
-# Success message
-echo ""
-echo "✓ TunnlR installed successfully!"
-echo "Run: tunnlr"
+if sudo mv tunnlr "$INSTALL_PATH"; then
+    echo ""
+    echo "✓ TunnlR installed successfully!"
+    echo "Run: tunnlr"
+else
+    echo ""
+    echo "✗ Installation failed!"
+    echo "Could not move binary to $INSTALL_DIR"
+    echo "You may need administrator privileges"
+    exit 1
+fi
