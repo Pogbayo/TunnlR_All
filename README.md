@@ -588,9 +588,13 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
              cd /var/www/TunnlR_All
-            git pull origin master
-            dotnet build -c Release -o out
-            sudo systemctl restart tunnlr
+             git pull origin master
+             cd TunnlR.API
+             dotnet clean
+             dotnet publish -c Release -o publish
+             echo "Restarting service..."
+             sudo systemctl restart tunnlr-api.service  
+             echo "Deployment complete!"
 ```
 
 Configure GitHub Secrets:
@@ -881,6 +885,124 @@ CLI → Server (response):
   "body": "...",
   "headers": { ... }
 }
+```
+
+## 🏛️ System Architecture Diagram
+```mermaid
+graph TB
+    subgraph "User's Browser"
+        Browser[🌐 Web Browser]
+    end
+
+    subgraph "Cloudflare CDN"
+        CF[☁️ Cloudflare<br/>- DDoS Protection<br/>- DNS Resolution<br/>- CDN Caching]
+    end
+
+    subgraph "AWS EC2 Instance - Production Server"
+        Nginx[🔒 Nginx Reverse Proxy<br/>Port 443<br/>- SSL/TLS Termination<br/>- WebSocket Upgrade<br/>- Load Balancing]
+        
+        subgraph "TunnlR Relay Server"
+            API[🎯 TunnlR.API<br/>localhost:5248<br/>ASP.NET Core Web API]
+            
+            subgraph "Application Layer"
+                Auth[🔐 Authentication Service<br/>JWT Token Management]
+                TunnelSvc[🚇 Tunnel Service<br/>Connection Management]
+                WSManager[📡 WebSocket Manager<br/>Connection Pool]
+            end
+            
+            subgraph "Infrastructure Layer"
+                DB[(💾 SQL Server Database<br/>- Users<br/>- Tunnels<br/>- Sessions)]
+                Identity[👤 ASP.NET Identity<br/>Password Hashing]
+            end
+            
+            subgraph "WebSocket Handler"
+                WSHandler[🔌 WebSocket Handler<br/>- Accept Connections<br/>- Message Routing<br/>- Response Correlation]
+            end
+        end
+        
+        Certbot[🔑 Let's Encrypt Certbot<br/>- Wildcard SSL Certificates<br/>- Auto-renewal]
+    end
+
+    subgraph "Developer's Machine"
+        CLI[💻 TunnlR CLI<br/>.NET Console App]
+        
+        subgraph "CLI Components"
+            AuthCmd[🔑 Auth Commands<br/>Login/Register]
+            TunnelCmd[🚀 Tunnel Commands<br/>Start/Stop]
+            WSClient[📡 WebSocket Client<br/>Persistent Connection]
+            TokenStore[💾 Token Storage<br/>~/.tunnlr/token.txt]
+        end
+        
+        LocalApp[🖥️ Local Application<br/>localhost:PORT<br/>- React/Vue/Angular<br/>- .NET/Node/Python API<br/>- Any HTTP Server]
+    end
+
+    subgraph "GitHub"
+        Repo[📦 GitHub Repository<br/>Source Code]
+        Actions[⚙️ GitHub Actions<br/>CI/CD Pipeline]
+        Releases[📋 Releases<br/>CLI Binaries]
+    end
+
+    %% User Flow
+    Browser -->|1. HTTPS Request<br/>https://abc123.domain.com| CF
+    CF -->|2. Encrypted Traffic| Nginx
+    Nginx -->|3. HTTP<br/>localhost:5248| API
+    
+    %% API Internal Flow
+    API --> Auth
+    API --> TunnelSvc
+    API --> WSHandler
+    Auth --> Identity
+    Auth --> DB
+    TunnelSvc --> DB
+    WSHandler --> WSManager
+    WSManager --> DB
+    
+    %% WebSocket Connection
+    CLI -.->|WSS Connection<br/>wss://domain.com/tunnel<br/>?token=JWT&port=3000| CF
+    CF -.->|WebSocket Upgrade| Nginx
+    Nginx -.->|WebSocket Proxy| WSHandler
+    
+    %% CLI Internal Flow
+    CLI --> AuthCmd
+    CLI --> TunnelCmd
+    CLI --> WSClient
+    AuthCmd --> TokenStore
+    TunnelCmd --> WSClient
+    
+    %% Request Forwarding
+    WSHandler -->|4. HTTP Request<br/>via WebSocket| WSClient
+    WSClient -->|5. HTTP Request<br/>localhost:3000| LocalApp
+    LocalApp -->|6. HTTP Response| WSClient
+    WSClient -->|7. Response<br/>via WebSocket| WSHandler
+    WSHandler -->|8. Response| API
+    API -->|9. HTTP Response| Nginx
+    Nginx -->|10. HTTPS Response| CF
+    CF -->|11. Encrypted Response| Browser
+    
+    %% SSL Certificates
+    Certbot -.->|Wildcard Certificates<br/>*.domain.com| Nginx
+    Certbot -.->|DNS-01 Challenge| CF
+    
+    %% CI/CD
+    Repo -->|Push to master| Actions
+    Actions -->|Deploy| API
+    Repo -->|Release| Releases
+    Releases -.->|Download Binary| CLI
+    
+    %% Styling
+    classDef frontend fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    classDef backend fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef database fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef network fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef security fill:#ffebee,stroke:#b71c1c,stroke-width:2px
+    classDef devops fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class Browser,LocalApp frontend
+    class API,Auth,TunnelSvc,WSHandler,WSManager,CLI,AuthCmd,TunnelCmd,WSClient backend
+    class DB,TokenStore database
+    class CF,Nginx,WSClient network
+    class Identity,Certbot,TokenStore security
+    class Repo,Actions,Releases devops
 ```
 
 ---
