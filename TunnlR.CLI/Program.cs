@@ -7,11 +7,10 @@ using TunnlR.CLI.Configuration;
 using TunnlR.CLI.Services;
 using TunnlRCLI.Helpers;
 
-
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
+    .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddUserSecrets<Program>()
     .AddEnvironmentVariables();
