@@ -27,27 +27,69 @@ New-Item -ItemType Directory -Force -Path $installPath | Out-Null
 
 # Download the binary from GitHub and save it to the install location
 Write-Host "Downloading..." -ForegroundColor Yellow
-Invoke-WebRequest -Uri $downloadUrl -OutFile $exePath
 
-# Get the current user's PATH environment variable
-# PATH tells Windows where to look for executable files
-$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-
-# Check if our install path is already in PATH
-# -notlike means "does not contain"
-if ($userPath -notlike "*$installPath*") {
-    Write-Host "Adding to PATH..." -ForegroundColor Yellow
+try {
+    # Attempt to download the binary
+    Invoke-WebRequest -Uri $downloadUrl -OutFile $exePath -ErrorAction Stop
     
-    # Add our install directory to PATH permanently (for this user)
-    # This allows running "tunnlr" from any folder
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$installPath", "User")
+    # Verify the file was actually downloaded
+    if (-not (Test-Path $exePath)) {
+        throw "Download failed - file not found"
+    }
     
-    # Also add to PATH for current session (so it works immediately)
-    $env:Path = "$env:Path;$installPath"
+    Write-Host "✓ Download complete!" -ForegroundColor Green
+    
+    # Create appsettings.json in the install directory
+    Write-Host "Creating configuration file..." -ForegroundColor Yellow
+    $appsettingsContent = @"
+{
+  "RelayServer": {
+    "HttpUrl": "https://tech-expert-beta.com.ng",
+    "WebSocketUrl": "wss://tech-expert-beta.com.ng/tunnel"
+  },
+  "LocalServer": {
+    "BaseUrl": "http://localhost",
+    "DefaultPort": 5000
+  }
 }
-
-# Success message
-Write-Host "`n✓ TunnlR installed successfully!" -ForegroundColor Green
-Write-Host "Run: " -NoNewline
-Write-Host "tunnlr" -ForegroundColor Cyan
-Write-Host "`nNote: You may need to restart your terminal." -ForegroundColor DarkGray
+"@
+    
+    $appsettingsPath = "$installPath\appsettings.json"
+    $appsettingsContent | Out-File -FilePath $appsettingsPath -Encoding UTF8
+    Write-Host "✓ Configuration created!" -ForegroundColor Green
+    
+    # Get the current user's PATH environment variable
+    # PATH tells Windows where to look for executable files
+    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    
+    # Check if our install path is already in PATH
+    # -notlike means "does not contain"
+    if ($userPath -notlike "*$installPath*") {
+        Write-Host "Adding to PATH..." -ForegroundColor Yellow
+        
+        # Add our install directory to PATH permanently (for this user)
+        # This allows running "tunnlr" from any folder
+        [Environment]::SetEnvironmentVariable("Path", "$userPath;$installPath", "User")
+        
+        # Also add to PATH for current session (so it works immediately)
+        $env:Path = "$env:Path;$installPath"
+    }
+    
+    # Success message
+    Write-Host "`n✓ TunnlR installed successfully!" -ForegroundColor Green
+    Write-Host "Run: " -NoNewline
+    Write-Host "tunnlr" -ForegroundColor Cyan
+    Write-Host "`nNote: You may need to restart your terminal." -ForegroundColor DarkGray
+    
+} catch {
+    # Download failed - show error and manual download instructions
+    Write-Host "`n✗ Installation failed!" -ForegroundColor Red
+    Write-Host "Error: $_" -ForegroundColor Red
+    Write-Host "`nPlease download manually from:" -ForegroundColor Yellow
+    Write-Host "https://github.com/Pogbayo/TunnlR_All/releases/latest" -ForegroundColor Cyan
+    Write-Host "`nAfter downloading:" -ForegroundColor Yellow
+    Write-Host "1. Move tunnlr-windows-x64.exe to C:\tunnlr\" -ForegroundColor Gray
+    Write-Host "2. Rename to tunnlr.exe" -ForegroundColor Gray
+    Write-Host "3. Add C:\tunnlr to your PATH" -ForegroundColor Gray
+    exit 1
+}

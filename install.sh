@@ -47,6 +47,9 @@ INSTALL_DIR="/usr/local/bin"
 # Full path where tunnlr will be installed
 INSTALL_PATH="$INSTALL_DIR/tunnlr"
 
+# Config directory for appsettings.json
+CONFIG_DIR="$HOME/.tunnlr"
+
 # Download the binary with error handling
 echo "Downloading $BINARY..."
 if curl -L "$DOWNLOAD_URL" -o tunnlr --fail --silent --show-error; then
@@ -71,9 +74,7 @@ chmod +x tunnlr
 
 # Move to system directory (requires sudo/admin password)
 if sudo mv tunnlr "$INSTALL_PATH"; then
-    echo ""
-    echo "✓ TunnlR installed successfully!"
-    echo "Run: tunnlr"
+    echo "✓ Binary installed!"
 else
     echo ""
     echo "✗ Installation failed!"
@@ -81,3 +82,26 @@ else
     echo "You may need administrator privileges"
     exit 1
 fi
+
+# Create config directory and appsettings.json
+echo "Creating configuration file..."
+mkdir -p "$CONFIG_DIR"
+
+cat > "$CONFIG_DIR/appsettings.json" << 'EOF'
+{
+  "RelayServer": {
+    "HttpUrl": "https://tech-expert-beta.com.ng",
+    "WebSocketUrl": "wss://tech-expert-beta.com.ng/tunnel"
+  },
+  "LocalServer": {
+    "BaseUrl": "http://localhost",
+    "DefaultPort": 5000
+  }
+}
+EOF
+
+echo "✓ Configuration created!"
+
+echo ""
+echo "✓ TunnlR installed successfully!"
+echo "Run: tunnlr"

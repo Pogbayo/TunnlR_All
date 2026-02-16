@@ -39,6 +39,25 @@ try {
     
     Write-Host "✓ Download complete!" -ForegroundColor Green
     
+    # Create appsettings.json in the install directory
+    Write-Host "Creating configuration file..." -ForegroundColor Yellow
+    $appsettingsContent = @"
+{
+  "RelayServer": {
+    "HttpUrl": "https://tech-expert-beta.com.ng",
+    "WebSocketUrl": "wss://tech-expert-beta.com.ng/tunnel"
+  },
+  "LocalServer": {
+    "BaseUrl": "http://localhost",
+    "DefaultPort": 5000
+  }
+}
+"@
+    
+    $appsettingsPath = "$installPath\appsettings.json"
+    $appsettingsContent | Out-File -FilePath $appsettingsPath -Encoding UTF8
+    Write-Host "✓ Configuration created!" -ForegroundColor Green
+    
     # Get the current user's PATH environment variable
     # PATH tells Windows where to look for executable files
     $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
