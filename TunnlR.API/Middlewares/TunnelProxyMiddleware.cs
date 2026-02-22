@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Net.WebSockets;
+using System.Runtime.InteropServices.Marshalling;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using TunnlR.API.WebSockets;
@@ -24,7 +25,7 @@ namespace TunnlR.API.Middlewares
                 context.Request.Host.Host.StartsWith("127.0.0.1") ||
                 context.Request.Host.Host == "tech-expert-beta.com.ng")
             {
-                // Only skip if it's /api or /swagger on the main domain
+                // Only skip if it's /api or /swagger on the main domani
                 if (context.Request.Path.StartsWithSegments("/api") ||
                     context.Request.Path.StartsWithSegments("/swagger"))
                 {
@@ -34,7 +35,8 @@ namespace TunnlR.API.Middlewares
             }
 
             // Step 1: Extract host and path
-            var host = context.Request.Host.Host; // locahlost or subdomain
+            // locahlost or subdomain
+            var host = context.Request.Host.Host;
             var path = context.Request.Path;
            
             using var scope = _serviceProvider.CreateScope();
@@ -48,11 +50,13 @@ namespace TunnlR.API.Middlewares
 
             if (subdomain == "www" || subdomain == "api" || subdomain == "dashboard" || host == "tech-expert-beta.com.ng")
             {
-                await _next(context); // skip tunnel middleware
+                // skip tunnel middleware
+                await _next(context); 
                 return;
             }
 
-            var requestId = Guid.NewGuid(); // Unique request ID
+            //UNique request Id
+            var requestId = Guid.NewGuid();
             var localPath = string.Empty;
             
             //Console.WriteLine("Got to the TunnelMiddleware entrance");
@@ -122,7 +126,7 @@ namespace TunnlR.API.Middlewares
 
                 if (tunnel == null)
                 {
-                    //if null, write the statuscode to 404 which the message "" TUnnel not found
+                    //if null, write the statucsode to 404 which the message "" TUnnel not found
                     context.Response.StatusCode = 404;
                     await context.Response.WriteAsync("Tunnel not found");
                     return;
@@ -186,7 +190,8 @@ namespace TunnlR.API.Middlewares
             request.EnableBuffering();
             using var reader = new StreamReader(request.Body);
             var body = await reader.ReadToEndAsync();
-            request.Body.Position = 0; // reset stream for downstream middelware
+            // reset stream for downstream middelware
+            request.Body.Position = 0; 
             return body;
         }
     }

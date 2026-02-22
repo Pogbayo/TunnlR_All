@@ -54,6 +54,7 @@ namespace TunnlR.API.WebSockets
                     return;
                 }
 
+                //will be removed when I implement the UI, but for now I need it to test the tunnel creation
                 var port = int.Parse(context.Request.Query["port"].ToString());
                 var protocol = context.Request.Query["protocol"].ToString();
 
